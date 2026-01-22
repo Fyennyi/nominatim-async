@@ -2,6 +2,8 @@
 
 namespace Fyennyi\Nominatim;
 
+use Fyennyi\Nominatim\Exception\TransportException;
+use Fyennyi\Nominatim\Model\Place;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -13,93 +15,145 @@ class Client
     private const DEFAULT_USER_AGENT = 'fyennyi-nominatim-php/1.0';
     private const BASE_URL = 'https://nominatim.openstreetmap.org/';
 
-    private ClientInterface $httpClient;
-    private ?CacheInterface $cache;
-    private string $userAgent;
+    /** @var ClientInterface The HTTP client instance */
+    private ClientInterface $http_client;
 
-    public function __construct(
-        ?ClientInterface $httpClient = null,
-        ?CacheInterface $cache = null,
-        string $userAgent = self::DEFAULT_USER_AGENT
-    ) {
-        $this->httpClient = $httpClient ?? new GuzzleClient(['base_uri' => self::BASE_URL]);
+    /** @var CacheInterface|null The cache instance */
+    private ?CacheInterface $cache;
+
+    /** @var string The user agent string */
+    private string $user_agent;
+
+    /**
+     * Constructor for Nominatim Client
+     *
+     * @param  ClientInterface|null  $http_client  Optional Guzzle client
+     * @param  CacheInterface|null   $cache        Optional PSR-16 cache
+     * @param  string                $user_agent   Custom User-Agent string
+     */
+    public function __construct(?ClientInterface $http_client = null, ?CacheInterface $cache = null, string $user_agent = self::DEFAULT_USER_AGENT)
+    {
+        $this->http_client = $http_client ?? new GuzzleClient(['base_uri' => self::BASE_URL]);
         $this->cache = $cache;
-        $this->userAgent = $userAgent;
+        $this->user_agent = $user_agent;
     }
 
     /**
-     * Reverse geocoding
+     * Searches for a place by query string or structured address
      *
-     * @param float $lat Latitude
-     * @param float $lon Longitude
-     * @param array<string, mixed> $params Optional parameters (zoom, addressdetails, etc.)
-     * @return PromiseInterface Resolves to array|null
+     * @param  string|array<string, string>  $query   Search query string or structured array
+     * @param  array<string, mixed>          $params  Optional query parameters
+     * @return PromiseInterface Promise that resolves to array<int, Place>
      */
-    public function reverse(float $lat, float $lon, array $params = []): PromiseInterface
+    public function search(string|array $query, array $params = []) : PromiseInterface
     {
-        $defaultParams = [
+        $query_params = array_merge($params, [
+            'format' => 'jsonv2',
+        ]);
+
+        if (is_array($query)) {
+            $query_params = array_merge($query_params, $query);
+        } else {
+            $query_params['q'] = $query;
+        }
+
+        return $this->requestAsync('GET', 'search', $query_params)
+            ->then(function (array $data) {
+                return array_map(fn(array $item) => new Place($item), $data);
+            });
+    }
+
+    /**
+     * Performs reverse geocoding for coordinates
+     *
+     * @param  float                 $lat     Latitude
+     * @param  float                 $lon     Longitude
+     * @param  array<string, mixed>  $params  Optional query parameters
+     * @return PromiseInterface Promise that resolves to Place|null
+     */
+    public function reverse(float $lat, float $lon, array $params = []) : PromiseInterface
+    {
+        $query_params = array_merge($params, [
             'lat' => $lat,
             'lon' => $lon,
             'format' => 'jsonv2',
-        ];
-        
-        $query = array_merge($defaultParams, $params);
+        ]);
 
-        return $this->requestAsync('GET', 'reverse', $query);
+        return $this->requestAsync('GET', 'reverse', $query_params)
+            ->then(function (array $data) {
+                return isset($data['place_id']) ? new Place($data) : null;
+            });
     }
 
     /**
-     * Search
+     * Looks up address details for OSM objects
      *
-     * @param string $query Query string
-     * @param array<string, mixed> $params Optional parameters
-     * @return PromiseInterface Resolves to array of results
+     * @param  array<string>         $osm_ids  List of OSM IDs (e.g. ['R146656', 'N240109189'])
+     * @param  array<string, mixed>  $params   Optional query parameters
+     * @return PromiseInterface Promise that resolves to array<int, Place>
      */
-    public function search(string $query, array $params = []): PromiseInterface
+    public function lookup(array $osm_ids, array $params = []) : PromiseInterface
     {
-        $defaultParams = [
-            'q' => $query,
+        $query_params = array_merge($params, [
+            'osm_ids' => implode(',', $osm_ids),
             'format' => 'jsonv2',
-        ];
+        ]);
 
-        $query = array_merge($defaultParams, $params);
-
-        return $this->requestAsync('GET', 'search', $query);
+        return $this->requestAsync('GET', 'lookup', $query_params)
+            ->then(function (array $data) {
+                return array_map(fn(array $item) => new Place($item), $data);
+            });
     }
 
     /**
-     * Lookup by OSM IDs
+     * Checks the status of the Nominatim server
      *
-     * @param array<string> $osmIds List of OSM IDs (e.g. ['R123', 'W456'])
-     * @param array<string, mixed> $params Optional parameters
-     * @return PromiseInterface Resolves to array of results
+     * @return PromiseInterface Promise that resolves to array{status: int, message: string, ...}
      */
-    public function lookup(array $osmIds, array $params = []): PromiseInterface
+    public function status() : PromiseInterface
     {
-        $defaultParams = [
-            'osm_ids' => implode(',', $osmIds),
-            'format' => 'jsonv2',
-        ];
-
-        $query = array_merge($defaultParams, $params);
-
-        return $this->requestAsync('GET', 'lookup', $query);
+        return $this->requestAsync('GET', 'status', ['format' => 'json']);
     }
 
-    private function requestAsync(string $method, string $endpoint, array $query): PromiseInterface
+    /**
+     * Internal helper to perform asynchronous HTTP requests
+     *
+     * @param  string                $method  HTTP method (GET, POST, etc.)
+     * @param  string                $path    API endpoint path
+     * @param  array<string, mixed>  $query   Query parameters
+     * @return PromiseInterface Promise that resolves to decoded JSON array
+     *
+     * @throws TransportException If request fails or JSON decoding fails
+     */
+    private function requestAsync(string $method, string $path, array $query) : PromiseInterface
     {
-        // TODO: Implement Caching & Rate Limiting here
-        
         $options = [
-            'query' => $query,
+            'query'   => $query,
             'headers' => [
-                'User-Agent' => $this->userAgent,
+                'User-Agent' => $this->user_agent,
+                'Accept'     => 'application/json',
             ]
         ];
 
-        return $this->httpClient->requestAsync($method, $endpoint, $options)
-            ->then(function (ResponseInterface $response) {
-                return json_decode($response->getBody()->getContents(), true);
-            });
+        return $this->http_client->requestAsync($method, $path, $options)
+            ->then(
+                function (ResponseInterface $response) {
+                    $body = $response->getBody()->getContents();
+                    $data = json_decode($body, true);
+
+                    if (JSON_ERROR_NONE !== json_last_error()) {
+                        throw new TransportException('Failed to decode JSON response: ' . json_last_error_msg());
+                    }
+
+                    if (! is_array($data)) {
+                        throw new TransportException('API returned invalid data format');
+                    }
+
+                    return $data;
+                },
+                function (\Throwable $e) {
+                    throw new TransportException('HTTP request failed: ' . $e->getMessage(), 0, $e);
+                }
+            );
     }
 }
