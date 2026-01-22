@@ -1,0 +1,30 @@
+{
+    "name": "fyennyi/nominatim-async",
+    "description": "Asynchronous PHP client for Nominatim API with Guzzle Promises support",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Serhii Cherneha",
+            "email": "chernegasergiy3@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "guzzlehttp/guzzle": "^7.0",
+        "psr/simple-cache": "^1.0 || ^2.0 || ^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0 || ^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fyennyi\\Nominatim\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Fyennyi\\Nominatim\\Tests\": "tests/"
+        }
+    }
+}
