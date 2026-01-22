@@ -2,7 +2,7 @@
     "name": "fyennyi/nominatim-async",
     "description": "Asynchronous PHP client for Nominatim API with Guzzle Promises support.",
     "type": "library",
-    "license": "MIT",
+    "license": "LicenseRef-CSSM-Unlimited-2.0",
     "authors": [
         {
             "name": "Serhii Cherneha",
