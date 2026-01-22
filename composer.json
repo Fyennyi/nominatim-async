@@ -19,12 +19,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Fyennyi\\Nominatim\": "src/"
+            "Fyennyi\\Nominatim\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Fyennyi\\Nominatim\\Tests\": "tests/"
+            "Fyennyi\\Nominatim\\Tests\\": "tests/"
         }
     }
 }
