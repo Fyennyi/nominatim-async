@@ -28,8 +28,8 @@ class Client
      * Constructor for Nominatim Client
      *
      * @param  ClientInterface|null  $http_client  Optional Guzzle client
-     * @param  CacheInterface|null   $cache        Optional PSR-16 cache
-     * @param  string                $user_agent   Custom User-Agent string
+     * @param  CacheInterface|null  $cache  Optional PSR-16 cache
+     * @param  string  $user_agent  Custom User-Agent string
      */
     public function __construct(?ClientInterface $http_client = null, ?CacheInterface $cache = null, string $user_agent = self::DEFAULT_USER_AGENT)
     {
@@ -41,8 +41,8 @@ class Client
     /**
      * Searches for a place by query string or structured address
      *
-     * @param  string|array<string, string>  $query   Search query string or structured array
-     * @param  array<string, mixed>          $params  Optional query parameters
+     * @param  string|array<string, string>  $query  Search query string or structured array
+     * @param  array<string, mixed>  $params  Optional query parameters
      * @return PromiseInterface Promise that resolves to array<int, Place>
      */
     public function search(string|array $query, array $params = []) : PromiseInterface
@@ -66,8 +66,8 @@ class Client
     /**
      * Performs reverse geocoding for coordinates
      *
-     * @param  float                 $lat     Latitude
-     * @param  float                 $lon     Longitude
+     * @param  float  $lat  Latitude
+     * @param  float  $lon  Longitude
      * @param  array<string, mixed>  $params  Optional query parameters
      * @return PromiseInterface Promise that resolves to Place|null
      */
@@ -88,8 +88,8 @@ class Client
     /**
      * Looks up address details for OSM objects
      *
-     * @param  array<string>         $osm_ids  List of OSM IDs (e.g. ['R146656', 'N240109189'])
-     * @param  array<string, mixed>  $params   Optional query parameters
+     * @param  array<string>  $osm_ids  List of OSM IDs (e.g. ['R146656', 'N240109189'])
+     * @param  array<string, mixed>  $params  Optional query parameters
      * @return PromiseInterface Promise that resolves to array<int, Place>
      */
     public function lookup(array $osm_ids, array $params = []) : PromiseInterface
@@ -118,9 +118,9 @@ class Client
     /**
      * Internal helper to perform asynchronous HTTP requests
      *
-     * @param  string                $method  HTTP method (GET, POST, etc.)
-     * @param  string                $path    API endpoint path
-     * @param  array<string, mixed>  $query   Query parameters
+     * @param  string  $method  HTTP method (GET, POST, etc.)
+     * @param  string  $path  API endpoint path
+     * @param  array<string, mixed>  $query  Query parameters
      * @return PromiseInterface Promise that resolves to decoded JSON array
      *
      * @throws TransportException If request fails or JSON decoding fails
