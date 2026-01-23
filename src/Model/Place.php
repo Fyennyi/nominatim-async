@@ -104,19 +104,19 @@ class Place
             $this->address = new Address($data['address']);
         } else {
             // Try to build address from flat GeocodeJSON properties
-            $addressParams = [];
-            $potentialKeys = ['housenumber', 'street', 'locality', 'district', 'postcode', 'city', 'county', 'state', 'country'];
-            foreach ($potentialKeys as $key) {
+            $address_params = [];
+            $potential_keys = ['housenumber', 'street', 'locality', 'district', 'postcode', 'city', 'county', 'state', 'country'];
+            foreach ($potential_keys as $key) {
                 if (isset($data[$key])) {
                     // Map 'housenumber' to 'house_number' for consistency with Address model keys if needed
                     // Address model uses 'house_number', but constructs from array keys.
                     // Let's check Address model logic. It looks for 'house_number'.
-                    $targetKey = ($key === 'housenumber') ? 'house_number' : $key;
-                    $addressParams[$targetKey] = $data[$key];
+                    $target_key = ($key === 'housenumber') ? 'house_number' : $key;
+                    $address_params[$target_key] = $data[$key];
                 }
             }
-            if (! empty($addressParams)) {
-                $this->address = new Address($addressParams);
+            if (! empty($address_params)) {
+                $this->address = new Address($address_params);
             } else {
                 $this->address = null;
             }
