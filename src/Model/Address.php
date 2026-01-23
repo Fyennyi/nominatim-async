@@ -22,7 +22,7 @@ class Address
      * @param  string  $key  The key to look up
      * @return string|null The value or null if not found
      */
-    public function get(string $key): ?string
+    public function get(string $key) : ?string
     {
         return $this->details[$key] ?? null;
     }
@@ -32,7 +32,7 @@ class Address
      *
      * @return string|null The country name
      */
-    public function getCountry(): ?string
+    public function getCountry() : ?string
     {
         return $this->get('country');
     }
@@ -42,7 +42,7 @@ class Address
      *
      * @return string|null The country code
      */
-    public function getCountryCode(): ?string
+    public function getCountryCode() : ?string
     {
         return $this->get('country_code');
     }
@@ -52,7 +52,7 @@ class Address
      *
      * @return string|null The continent
      */
-    public function getContinent(): ?string
+    public function getContinent() : ?string
     {
         return $this->get('continent');
     }
@@ -62,7 +62,7 @@ class Address
      *
      * @return string|null The state
      */
-    public function getState(): ?string
+    public function getState() : ?string
     {
         return $this->get('state');
     }
@@ -72,7 +72,7 @@ class Address
      *
      * @return string|null The region
      */
-    public function getRegion(): ?string
+    public function getRegion() : ?string
     {
         return $this->get('region');
     }
@@ -82,7 +82,7 @@ class Address
      *
      * @return string|null The state district
      */
-    public function getStateDistrict(): ?string
+    public function getStateDistrict() : ?string
     {
         return $this->get('state_district');
     }
@@ -92,7 +92,7 @@ class Address
      *
      * @return string|null The county
      */
-    public function getCounty(): ?string
+    public function getCounty() : ?string
     {
         return $this->get('county');
     }
@@ -102,7 +102,7 @@ class Address
      *
      * @return string|null The municipality
      */
-    public function getMunicipality(): ?string
+    public function getMunicipality() : ?string
     {
         return $this->get('municipality');
     }
@@ -112,7 +112,7 @@ class Address
      *
      * @return string|null The city name
      */
-    public function getCity(): ?string
+    public function getCity() : ?string
     {
         return $this->get('city');
     }
@@ -122,7 +122,7 @@ class Address
      *
      * @return string|null The town name
      */
-    public function getTown(): ?string
+    public function getTown() : ?string
     {
         return $this->get('town');
     }
@@ -132,7 +132,7 @@ class Address
      *
      * @return string|null The village name
      */
-    public function getVillage(): ?string
+    public function getVillage() : ?string
     {
         return $this->get('village');
     }
@@ -142,7 +142,7 @@ class Address
      *
      * @return string|null The settlement name
      */
-    public function getSettlement(): ?string
+    public function getSettlement() : ?string
     {
         return $this->getCity() ?? $this->getTown() ?? $this->getVillage() ?? $this->getHamlet();
     }
@@ -152,7 +152,7 @@ class Address
      *
      * @return string|null The city district
      */
-    public function getCityDistrict(): ?string
+    public function getCityDistrict() : ?string
     {
         return $this->get('city_district');
     }
@@ -162,7 +162,7 @@ class Address
      *
      * @return string|null The district name
      */
-    public function getDistrict(): ?string
+    public function getDistrict() : ?string
     {
         return $this->get('district');
     }
@@ -172,7 +172,7 @@ class Address
      *
      * @return string|null The borough name
      */
-    public function getBorough(): ?string
+    public function getBorough() : ?string
     {
         return $this->get('borough');
     }
@@ -182,7 +182,7 @@ class Address
      *
      * @return string|null The suburb name
      */
-    public function getSuburb(): ?string
+    public function getSuburb() : ?string
     {
         return $this->get('suburb');
     }
@@ -192,7 +192,7 @@ class Address
      *
      * @return string|null The subdivision name
      */
-    public function getSubdivision(): ?string
+    public function getSubdivision() : ?string
     {
         return $this->get('subdivision');
     }
@@ -202,7 +202,7 @@ class Address
      *
      * @return string|null The hamlet name
      */
-    public function getHamlet(): ?string
+    public function getHamlet() : ?string
     {
         return $this->get('hamlet');
     }
@@ -212,7 +212,7 @@ class Address
      *
      * @return string|null The croft name
      */
-    public function getCroft(): ?string
+    public function getCroft() : ?string
     {
         return $this->get('croft');
     }
@@ -222,7 +222,7 @@ class Address
      *
      * @return string|null The isolated dwelling name
      */
-    public function getIsolatedDwelling(): ?string
+    public function getIsolatedDwelling() : ?string
     {
         return $this->get('isolated_dwelling');
     }
@@ -232,7 +232,7 @@ class Address
      *
      * @return string|null The neighbourhood name
      */
-    public function getNeighbourhood(): ?string
+    public function getNeighbourhood() : ?string
     {
         return $this->get('neighbourhood');
     }
@@ -242,7 +242,7 @@ class Address
      *
      * @return string|null The allotments name
      */
-    public function getAllotments(): ?string
+    public function getAllotments() : ?string
     {
         return $this->get('allotments');
     }
@@ -252,7 +252,7 @@ class Address
      *
      * @return string|null The quarter name
      */
-    public function getQuarter(): ?string
+    public function getQuarter() : ?string
     {
         return $this->get('quarter');
     }
@@ -262,7 +262,7 @@ class Address
      *
      * @return string|null The city block name
      */
-    public function getCityBlock(): ?string
+    public function getCityBlock() : ?string
     {
         return $this->get('city_block');
     }
@@ -272,7 +272,7 @@ class Address
      *
      * @return string|null The residential area name
      */
-    public function getResidential(): ?string
+    public function getResidential() : ?string
     {
         return $this->get('residential');
     }
@@ -282,7 +282,7 @@ class Address
      *
      * @return string|null The farm name
      */
-    public function getFarm(): ?string
+    public function getFarm() : ?string
     {
         return $this->get('farm');
     }
@@ -292,7 +292,7 @@ class Address
      *
      * @return string|null The farmyard name
      */
-    public function getFarmyard(): ?string
+    public function getFarmyard() : ?string
     {
         return $this->get('farmyard');
     }
@@ -302,7 +302,7 @@ class Address
      *
      * @return string|null The industrial area name
      */
-    public function getIndustrial(): ?string
+    public function getIndustrial() : ?string
     {
         return $this->get('industrial');
     }
@@ -312,7 +312,7 @@ class Address
      *
      * @return string|null The commercial area name
      */
-    public function getCommercial(): ?string
+    public function getCommercial() : ?string
     {
         return $this->get('commercial');
     }
@@ -322,7 +322,7 @@ class Address
      *
      * @return string|null The retail area name
      */
-    public function getRetail(): ?string
+    public function getRetail() : ?string
     {
         return $this->get('retail');
     }
@@ -332,7 +332,7 @@ class Address
      *
      * @return string|null The road name
      */
-    public function getRoad(): ?string
+    public function getRoad() : ?string
     {
         return $this->get('road');
     }
@@ -342,7 +342,7 @@ class Address
      *
      * @return string|null The house number
      */
-    public function getHouseNumber(): ?string
+    public function getHouseNumber() : ?string
     {
         return $this->get('house_number');
     }
@@ -352,7 +352,7 @@ class Address
      *
      * @return string|null The house name
      */
-    public function getHouseName(): ?string
+    public function getHouseName() : ?string
     {
         return $this->get('house_name');
     }
@@ -362,7 +362,7 @@ class Address
      *
      * @return string|null The postcode
      */
-    public function getPostcode(): ?string
+    public function getPostcode() : ?string
     {
         return $this->get('postcode');
     }
@@ -372,7 +372,7 @@ class Address
      *
      * @return string|null The ISO code
      */
-    public function getIso31662Lvl4(): ?string
+    public function getIso31662Lvl4() : ?string
     {
         return $this->get('ISO3166-2-lvl4');
     }
@@ -382,7 +382,7 @@ class Address
      *
      * @return string|null The emergency facility
      */
-    public function getEmergency(): ?string
+    public function getEmergency() : ?string
     {
         return $this->get('emergency');
     }
@@ -392,7 +392,7 @@ class Address
      *
      * @return string|null The historic site
      */
-    public function getHistoric(): ?string
+    public function getHistoric() : ?string
     {
         return $this->get('historic');
     }
@@ -402,7 +402,7 @@ class Address
      *
      * @return string|null The military area
      */
-    public function getMilitary(): ?string
+    public function getMilitary() : ?string
     {
         return $this->get('military');
     }
@@ -412,7 +412,7 @@ class Address
      *
      * @return string|null The natural feature
      */
-    public function getNatural(): ?string
+    public function getNatural() : ?string
     {
         return $this->get('natural');
     }
@@ -422,7 +422,7 @@ class Address
      *
      * @return string|null The landuse type
      */
-    public function getLanduse(): ?string
+    public function getLanduse() : ?string
     {
         return $this->get('landuse');
     }
@@ -432,7 +432,7 @@ class Address
      *
      * @return string|null The place type
      */
-    public function getPlace(): ?string
+    public function getPlace() : ?string
     {
         return $this->get('place');
     }
@@ -442,7 +442,7 @@ class Address
      *
      * @return string|null The railway feature
      */
-    public function getRailway(): ?string
+    public function getRailway() : ?string
     {
         return $this->get('railway');
     }
@@ -452,7 +452,7 @@ class Address
      *
      * @return string|null The man-made structure
      */
-    public function getManMade(): ?string
+    public function getManMade() : ?string
     {
         return $this->get('man_made');
     }
@@ -462,7 +462,7 @@ class Address
      *
      * @return string|null The aerialway feature
      */
-    public function getAerialway(): ?string
+    public function getAerialway() : ?string
     {
         return $this->get('aerialway');
     }
@@ -472,7 +472,7 @@ class Address
      *
      * @return string|null The boundary
      */
-    public function getBoundary(): ?string
+    public function getBoundary() : ?string
     {
         return $this->get('boundary');
     }
@@ -482,7 +482,7 @@ class Address
      *
      * @return string|null The amenity
      */
-    public function getAmenity(): ?string
+    public function getAmenity() : ?string
     {
         return $this->get('amenity');
     }
@@ -492,7 +492,7 @@ class Address
      *
      * @return string|null The aeroway feature
      */
-    public function getAeroway(): ?string
+    public function getAeroway() : ?string
     {
         return $this->get('aeroway');
     }
@@ -502,7 +502,7 @@ class Address
      *
      * @return string|null The club
      */
-    public function getClub(): ?string
+    public function getClub() : ?string
     {
         return $this->get('club');
     }
@@ -512,7 +512,7 @@ class Address
      *
      * @return string|null The craft
      */
-    public function getCraft(): ?string
+    public function getCraft() : ?string
     {
         return $this->get('craft');
     }
@@ -522,7 +522,7 @@ class Address
      *
      * @return string|null The leisure facility
      */
-    public function getLeisure(): ?string
+    public function getLeisure() : ?string
     {
         return $this->get('leisure');
     }
@@ -532,7 +532,7 @@ class Address
      *
      * @return string|null The office
      */
-    public function getOffice(): ?string
+    public function getOffice() : ?string
     {
         return $this->get('office');
     }
@@ -542,7 +542,7 @@ class Address
      *
      * @return string|null The mountain pass
      */
-    public function getMountainPass(): ?string
+    public function getMountainPass() : ?string
     {
         return $this->get('mountain_pass');
     }
@@ -552,7 +552,7 @@ class Address
      *
      * @return string|null The shop
      */
-    public function getShop(): ?string
+    public function getShop() : ?string
     {
         return $this->get('shop');
     }
@@ -562,7 +562,7 @@ class Address
      *
      * @return string|null The tourism spot
      */
-    public function getTourism(): ?string
+    public function getTourism() : ?string
     {
         return $this->get('tourism');
     }
@@ -572,7 +572,7 @@ class Address
      *
      * @return string|null The bridge
      */
-    public function getBridge(): ?string
+    public function getBridge() : ?string
     {
         return $this->get('bridge');
     }
@@ -582,7 +582,7 @@ class Address
      *
      * @return string|null The tunnel
      */
-    public function getTunnel(): ?string
+    public function getTunnel() : ?string
     {
         return $this->get('tunnel');
     }
@@ -592,7 +592,7 @@ class Address
      *
      * @return string|null The waterway
      */
-    public function getWaterway(): ?string
+    public function getWaterway() : ?string
     {
         return $this->get('waterway');
     }
@@ -602,7 +602,7 @@ class Address
      *
      * @return array The raw details array
      */
-    public function toArray(): array
+    public function toArray() : array
     {
         return $this->details;
     }

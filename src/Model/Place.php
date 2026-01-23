@@ -128,7 +128,7 @@ class Place
      *
      * @return int The place ID
      */
-    public function getPlaceId(): int
+    public function getPlaceId() : int
     {
         return $this->place_id;
     }
@@ -138,7 +138,7 @@ class Place
      *
      * @return string|null The license string
      */
-    public function getLicence(): ?string
+    public function getLicence() : ?string
     {
         return $this->licence;
     }
@@ -148,7 +148,7 @@ class Place
      *
      * @return string|null The OSM type
      */
-    public function getOsmType(): ?string
+    public function getOsmType() : ?string
     {
         return $this->osm_type;
     }
@@ -158,7 +158,7 @@ class Place
      *
      * @return int|null The OSM ID
      */
-    public function getOsmId(): ?int
+    public function getOsmId() : ?int
     {
         return $this->osm_id;
     }
@@ -168,7 +168,7 @@ class Place
      *
      * @return float The latitude
      */
-    public function getLat(): float
+    public function getLat() : float
     {
         return $this->lat;
     }
@@ -178,7 +178,7 @@ class Place
      *
      * @return float The longitude
      */
-    public function getLon(): float
+    public function getLon() : float
     {
         return $this->lon;
     }
@@ -188,7 +188,7 @@ class Place
      *
      * @return string The full address
      */
-    public function getDisplayName(): string
+    public function getDisplayName() : string
     {
         return $this->display_name;
     }
@@ -198,7 +198,7 @@ class Place
      *
      * @return string|null The category
      */
-    public function getCategory(): ?string
+    public function getCategory() : ?string
     {
         return $this->category;
     }
@@ -208,7 +208,7 @@ class Place
      *
      * @return string|null The type
      */
-    public function getType(): ?string
+    public function getType() : ?string
     {
         return $this->type;
     }
@@ -218,7 +218,7 @@ class Place
      *
      * @return float|null The importance score
      */
-    public function getImportance(): ?float
+    public function getImportance() : ?float
     {
         return $this->importance;
     }
@@ -228,7 +228,7 @@ class Place
      *
      * @return int|null The search rank
      */
-    public function getPlaceRank(): ?int
+    public function getPlaceRank() : ?int
     {
         return $this->place_rank;
     }
@@ -238,7 +238,7 @@ class Place
      *
      * @return int|null The address rank
      */
-    public function getAddressRank(): ?int
+    public function getAddressRank() : ?int
     {
         return $this->address_rank;
     }
@@ -248,7 +248,7 @@ class Place
      *
      * @return float[]|null The bounding box
      */
-    public function getBoundingBox(): ?array
+    public function getBoundingBox() : ?array
     {
         return $this->bounding_box;
     }
@@ -258,7 +258,7 @@ class Place
      *
      * @return string|null The icon URL
      */
-    public function getIcon(): ?string
+    public function getIcon() : ?string
     {
         return $this->icon;
     }
@@ -268,7 +268,7 @@ class Place
      *
      * @return Address|null The address object
      */
-    public function getAddress(): ?Address
+    public function getAddress() : ?Address
     {
         return $this->address;
     }
@@ -278,7 +278,7 @@ class Place
      *
      * @return array The extra tags
      */
-    public function getExtraTags(): array
+    public function getExtraTags() : array
     {
         return $this->extra_tags;
     }
@@ -288,7 +288,7 @@ class Place
      *
      * @return array The name details
      */
-    public function getNameDetails(): array
+    public function getNameDetails() : array
     {
         return $this->name_details;
     }
@@ -298,7 +298,7 @@ class Place
      *
      * @return array|string|null The geometry
      */
-    public function getGeometry(): array|string|null
+    public function getGeometry() : array|string|null
     {
         return $this->geometry;
     }
@@ -308,7 +308,7 @@ class Place
      *
      * @return array The entrances
      */
-    public function getEntrances(): array
+    public function getEntrances() : array
     {
         return $this->entrances;
     }
@@ -318,7 +318,7 @@ class Place
      *
      * @return int|null The parent place ID
      */
-    public function getParentPlaceId(): ?int
+    public function getParentPlaceId() : ?int
     {
         return $this->parent_place_id;
     }
@@ -328,7 +328,7 @@ class Place
      *
      * @return string|null The administrative level
      */
-    public function getAdminLevel(): ?string
+    public function getAdminLevel() : ?string
     {
         return $this->admin_level;
     }
@@ -338,7 +338,7 @@ class Place
      *
      * @return string|null The local name
      */
-    public function getLocalName(): ?string
+    public function getLocalName() : ?string
     {
         return $this->local_name;
     }
@@ -348,7 +348,7 @@ class Place
      *
      * @return array The address tags
      */
-    public function getAddressTags(): array
+    public function getAddressTags() : array
     {
         return $this->address_tags;
     }
@@ -358,7 +358,7 @@ class Place
      *
      * @return string|null The house number
      */
-    public function getHouseNumber(): ?string
+    public function getHouseNumber() : ?string
     {
         return $this->house_number;
     }
@@ -368,7 +368,7 @@ class Place
      *
      * @return string|null The calculated postcode
      */
-    public function getCalculatedPostcode(): ?string
+    public function getCalculatedPostcode() : ?string
     {
         return $this->calculated_postcode;
     }
@@ -378,7 +378,7 @@ class Place
      *
      * @return string|null The indexed date
      */
-    public function getIndexedDate(): ?string
+    public function getIndexedDate() : ?string
     {
         return $this->indexed_date;
     }
@@ -388,7 +388,7 @@ class Place
      *
      * @return float|null The calculated importance score
      */
-    public function getCalculatedImportance(): ?float
+    public function getCalculatedImportance() : ?float
     {
         return $this->calculated_importance;
     }
@@ -398,7 +398,7 @@ class Place
      *
      * @return string|null The Wikipedia tag
      */
-    public function getCalculatedWikipedia(): ?string
+    public function getCalculatedWikipedia() : ?string
     {
         return $this->calculated_wikipedia;
     }
@@ -408,7 +408,7 @@ class Place
      *
      * @return bool True if it's an area
      */
-    public function isArea(): bool
+    public function isArea() : bool
     {
         return $this->is_area;
     }
@@ -418,7 +418,7 @@ class Place
      *
      * @return array|null The centroid object
      */
-    public function getCentroid(): ?array
+    public function getCentroid() : ?array
     {
         return $this->centroid;
     }
@@ -428,7 +428,7 @@ class Place
      *
      * @return string|null The address type
      */
-    public function getAddressType(): ?string
+    public function getAddressType() : ?string
     {
         return $this->address_type;
     }
@@ -438,7 +438,7 @@ class Place
      *
      * @return string|null The name
      */
-    public function getName(): ?string
+    public function getName() : ?string
     {
         return $this->name;
     }
@@ -448,7 +448,7 @@ class Place
      *
      * @return string|null The label
      */
-    public function getLabel(): ?string
+    public function getLabel() : ?string
     {
         return $this->label;
     }
@@ -458,7 +458,7 @@ class Place
      *
      * @return array The admin levels
      */
-    public function getAdminLevels(): array
+    public function getAdminLevels() : array
     {
         return $this->admin_levels;
     }
