@@ -115,7 +115,7 @@ class Place
                     $addressParams[$targetKey] = $data[$key];
                 }
             }
-            if (!empty($addressParams)) {
+            if (! empty($addressParams)) {
                 $this->address = new Address($addressParams);
             } else {
                 $this->address = null;

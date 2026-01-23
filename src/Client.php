@@ -180,7 +180,7 @@ class Client
      */
     public function status(string $format = 'json') : PromiseInterface
     {
-        if (!in_array($format, ['json', 'text'])) {
+        if (! in_array($format, ['json', 'text'])) {
             throw new \InvalidArgumentException('Invalid format. Supported formats: json, text');
         }
 
