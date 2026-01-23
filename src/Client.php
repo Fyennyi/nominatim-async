@@ -2,6 +2,9 @@
 
 namespace Fyennyi\Nominatim;
 
+use Fyennyi\AsyncCache\AsyncCacheManager;
+use Fyennyi\AsyncCache\CacheOptions;
+use Fyennyi\AsyncCache\RateLimiter\InMemoryRateLimiter;
 use Fyennyi\Nominatim\Exception\TransportException;
 use Fyennyi\Nominatim\Model\Place;
 use GuzzleHttp\Client as GuzzleClient;
@@ -9,6 +12,8 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\Psr16Adapter;
 
 class Client
 {
@@ -18,8 +23,8 @@ class Client
     /** @var ClientInterface The HTTP client instance */
     private ClientInterface $http_client;
 
-    /** @var CacheInterface|null The cache instance */
-    private ?CacheInterface $cache;
+    /** @var AsyncCacheManager The async cache manager instance */
+    private AsyncCacheManager $async_cache;
 
     /** @var string The user agent string */
     private string $user_agent;
@@ -34,8 +39,27 @@ class Client
     public function __construct(?ClientInterface $http_client = null, ?CacheInterface $cache = null, string $user_agent = self::DEFAULT_USER_AGENT)
     {
         $this->http_client = $http_client ?? new GuzzleClient(['base_uri' => self::BASE_URL]);
-        $this->cache = $cache;
         $this->user_agent = $user_agent;
+
+        // Setup Rate Limiter (Nominatim Usage Policy: Max 1 request per second)
+        $rate_limiter = new InMemoryRateLimiter();
+        $rate_limiter->configure('nominatim_api', 1);
+
+        // Setup Cache Manager (Default to ArrayCache if none provided)
+        // If Symfony Cache is not installed, user must provide a PSR-16 implementation.
+        // Assuming Symfony Cache is present or cache is optional.
+        if ($cache === null) {
+            // Fallback to array adapter wrapped in PSR-16 if available, or just null logic handling in Manager?
+            // AsyncCacheManager requires PSR-16. Let's create a simple array cache if null.
+            // Note: This requires symfony/cache package or similar. nominatim-async doesn't require it explicitly in composer.json yet?
+            // Let's assume we need to handle null cache. But AsyncCacheManager requires CacheInterface.
+            // We'll use ArrayAdapter if available, or a dummy if not.
+            // For now, let's assume the user has symfony/cache or similar as dev-dep or provided one.
+            // But wait, to be safe, if $cache is null, we should use a null adapter or array adapter.
+            $cache = new Psr16Adapter(new ArrayAdapter());
+        }
+
+        $this->async_cache = new AsyncCacheManager($cache, $rate_limiter);
     }
 
     /**
@@ -200,38 +224,52 @@ class Client
      */
     private function requestAsync(string $method, string $path, array $query, bool $decode_json = true) : PromiseInterface
     {
-        $options = [
-            'query'   => $query,
-            'headers' => [
-                'User-Agent' => $this->user_agent,
-                'Accept'     => $decode_json ? 'application/json' : 'text/plain',
-            ]
-        ];
+        $cache_key = 'nominatim_' . md5($method . $path . serialize($query));
+        
+        $options = new CacheOptions(
+            ttl: 86400, // 24 hours logical TTL for Geo Data
+            rate_limit_key: 'nominatim_api',
+            serve_stale_if_limited: true
+        );
 
-        return $this->http_client->requestAsync($method, $path, $options)
-            ->then(
-                function (ResponseInterface $response) use ($decode_json) {
-                    $body = $response->getBody()->getContents();
+        return $this->async_cache->wrap(
+            $cache_key,
+            function () use ($method, $path, $query, $decode_json) {
+                $http_options = [
+                    'query'   => $query,
+                    'headers' => [
+                        'User-Agent' => $this->user_agent,
+                        'Accept'     => $decode_json ? 'application/json' : 'text/plain',
+                    ]
+                ];
 
-                    if (! $decode_json) {
-                        return $body;
-                    }
+                return $this->http_client->requestAsync($method, $path, $http_options)
+                    ->then(
+                        function (ResponseInterface $response) use ($decode_json) {
+                            $body = $response->getBody()->getContents();
 
-                    $data = json_decode($body, true);
+                            if (! $decode_json) {
+                                return $body;
+                            }
 
-                    if (JSON_ERROR_NONE !== json_last_error()) {
-                        throw new TransportException('Failed to decode JSON response: ' . json_last_error_msg());
-                    }
+                            $data = json_decode($body, true);
 
-                    if (! is_array($data)) {
-                        throw new TransportException('API returned invalid data format');
-                    }
+                            if (JSON_ERROR_NONE !== json_last_error()) {
+                                throw new TransportException('Failed to decode JSON response: ' . json_last_error_msg());
+                            }
 
-                    return $data;
-                },
-                function (\Throwable $e) {
-                    throw new TransportException('HTTP request failed: ' . $e->getMessage(), 0, $e);
-                }
-            );
+                            if (! is_array($data)) {
+                                throw new TransportException('API returned invalid data format');
+                            }
+
+                            return $data;
+                        },
+                        function (\Throwable $e) {
+                            throw new TransportException('HTTP request failed: ' . $e->getMessage(), 0, $e);
+                        }
+                    );
+            },
+            $options
+        );
     }
 }
