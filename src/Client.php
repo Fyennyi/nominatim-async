@@ -47,9 +47,8 @@ class Client
      */
     public function search(string|array $query, array $params = []) : PromiseInterface
     {
-        $query_params = array_merge($params, [
-            'format' => 'jsonv2',
-        ]);
+        $default_params = ['format' => 'jsonv2'];
+        $query_params = array_merge($default_params, $params);
 
         if (is_array($query)) {
             $query_params = array_merge($query_params, $query);
@@ -58,8 +57,8 @@ class Client
         }
 
         return $this->requestAsync('GET', 'search', $query_params)
-            ->then(function (array $data) {
-                return array_map(fn(array $item) => new Place($item), $data);
+            ->then(function (array $data) use ($query_params) {
+                return $this->processResponse($data, $query_params['format']);
             });
     }
 
@@ -73,15 +72,16 @@ class Client
      */
     public function reverse(float $lat, float $lon, array $params = []) : PromiseInterface
     {
-        $query_params = array_merge($params, [
+        $default_params = ['format' => 'jsonv2'];
+        $query_params = array_merge($default_params, $params, [
             'lat' => $lat,
             'lon' => $lon,
-            'format' => 'jsonv2',
         ]);
 
         return $this->requestAsync('GET', 'reverse', $query_params)
-            ->then(function (array $data) {
-                return isset($data['place_id']) ? new Place($data) : null;
+            ->then(function (array $data) use ($query_params) {
+                $places = $this->processResponse($data, $query_params['format']);
+                return $places[0] ?? null;
             });
     }
 
@@ -94,25 +94,97 @@ class Client
      */
     public function lookup(array $osm_ids, array $params = []) : PromiseInterface
     {
-        $query_params = array_merge($params, [
+        $default_params = ['format' => 'jsonv2'];
+        $query_params = array_merge($default_params, $params, [
             'osm_ids' => implode(',', $osm_ids),
-            'format' => 'jsonv2',
         ]);
 
         return $this->requestAsync('GET', 'lookup', $query_params)
-            ->then(function (array $data) {
-                return array_map(fn(array $item) => new Place($item), $data);
+            ->then(function (array $data) use ($query_params) {
+                return $this->processResponse($data, $query_params['format']);
             });
+    }
+
+    /**
+     * Get details of a place by OSM ID or Place ID
+     *
+     * @param  array<string, mixed>  $params  Query parameters (e.g., ['osmtype' => 'W', 'osmid' => 123] or ['place_id' => 123])
+     * @return PromiseInterface Promise that resolves to Place
+     */
+    public function details(array $params) : PromiseInterface
+    {
+        // details endpoint only supports json
+        $query_params = array_merge($params, [
+            'format' => 'json',
+        ]);
+
+        return $this->requestAsync('GET', 'details', $query_params)
+            ->then(function (array $data) {
+                return new Place($data);
+            });
+    }
+
+    /**
+     * Processes the API response based on the format
+     *
+     * @param  array  $data  Decoded JSON response
+     * @param  string  $format  The format requested
+     * @return array<int, Place> Array of Place objects
+     */
+    private function processResponse(array $data, string $format) : array
+    {
+        if ($format === 'geojson' || $format === 'geocodejson') {
+            $features = $data['features'] ?? [];
+            return array_map(function (array $feature) use ($format) {
+                $properties = $feature['properties'] ?? [];
+                
+                // For geocodejson, properties are nested under 'geocoding'
+                if ($format === 'geocodejson') {
+                    $properties = $properties['geocoding'] ?? $properties;
+                }
+
+                if (isset($feature['geometry'])) {
+                    $properties['geometry'] = $feature['geometry'];
+                }
+                return new Place($properties);
+            }, $features);
+        }
+
+        // Handle single object response (possible in some error cases or specific formats, though typically search returns list)
+        // But for consistency, we treat the input as a list of places for standard JSON formats
+        // Note: reverse geocoding returns a single object in jsonv2, but we handle that in the reverse method wrapper
+        
+        // However, nominatim search returns a list. reverse returns object.
+        // Let's standardize: this method returns a LIST of Place objects.
+        
+        if (isset($data['place_id']) || isset($data['error'])) {
+             // It's a single object (or error)
+             // If it's an error, Place constructor might fail or produce empty object. 
+             // Ideally we should check for error.
+             if (isset($data['error'])) {
+                 return [];
+             }
+             return [new Place($data)];
+        }
+
+        return array_map(fn(array $item) => new Place($item), $data);
     }
 
     /**
      * Checks the status of the Nominatim server
      *
-     * @return PromiseInterface Promise that resolves to array{status: int, message: string, ...}
+     * @param  string  $format  Output format ('json' or 'text'). Default 'json'.
+     * @return PromiseInterface Promise that resolves to array{status: int, message: string, ...} or string
+     *
+     * @throws \InvalidArgumentException If format is invalid
      */
-    public function status() : PromiseInterface
+    public function status(string $format = 'json') : PromiseInterface
     {
-        return $this->requestAsync('GET', 'status', ['format' => 'json']);
+        if (!in_array($format, ['json', 'text'])) {
+            throw new \InvalidArgumentException('Invalid format. Supported formats: json, text');
+        }
+
+        return $this->requestAsync('GET', 'status', ['format' => $format], $format === 'json');
     }
 
     /**
@@ -121,24 +193,30 @@ class Client
      * @param  string  $method  HTTP method (GET, POST, etc.)
      * @param  string  $path  API endpoint path
      * @param  array<string, mixed>  $query  Query parameters
-     * @return PromiseInterface Promise that resolves to decoded JSON array
+     * @param  bool  $decode_json  Whether to decode the response as JSON
+     * @return PromiseInterface Promise that resolves to decoded JSON array or raw string
      *
      * @throws TransportException If request fails or JSON decoding fails
      */
-    private function requestAsync(string $method, string $path, array $query) : PromiseInterface
+    private function requestAsync(string $method, string $path, array $query, bool $decode_json = true) : PromiseInterface
     {
         $options = [
             'query'   => $query,
             'headers' => [
                 'User-Agent' => $this->user_agent,
-                'Accept'     => 'application/json',
+                'Accept'     => $decode_json ? 'application/json' : 'text/plain',
             ]
         ];
 
         return $this->http_client->requestAsync($method, $path, $options)
             ->then(
-                function (ResponseInterface $response) {
+                function (ResponseInterface $response) use ($decode_json) {
                     $body = $response->getBody()->getContents();
+
+                    if (! $decode_json) {
+                        return $body;
+                    }
+
                     $data = json_decode($body, true);
 
                     if (JSON_ERROR_NONE !== json_last_error()) {
