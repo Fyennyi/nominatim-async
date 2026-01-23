@@ -127,7 +127,9 @@ class PlaceTest extends TestCase
                 'coordinates' => [13.3786822618517, 52.5163654]
             ],
             'addresstype' => 'road',
-            'name' => 'Pariser Platz'
+            'name' => 'Pariser Platz',
+            'label' => 'Pariser Platz, Berlin',
+            'admin' => ['level2' => 'Germany']
         ];
 
         $place = new Place($data);
@@ -142,6 +144,8 @@ class PlaceTest extends TestCase
         $this->assertEquals('Pariser Platz', $place->getLocalName());
         $this->assertEquals('road', $place->getAddressType());
         $this->assertEquals('Pariser Platz', $place->getName());
+        $this->assertEquals('Pariser Platz, Berlin', $place->getLabel());
+        $this->assertEquals(['level2' => 'Germany'], $place->getAdminLevels());
         $this->assertEquals('Паризька площа', $place->getNameDetails()['name:uk']);
         $this->assertEquals('10117', $place->getAddressTags()['postcode']);
         $this->assertNull($place->getHouseNumber());
