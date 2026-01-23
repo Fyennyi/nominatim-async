@@ -162,4 +162,31 @@ class PlaceTest extends TestCase
         $this->assertNotNull($place->getCentroid());
         $this->assertNotNull($place->getGeometry());
     }
+
+    public function testFlatAddressMapping()
+    {
+        $data = [
+            'place_id' => 123,
+            'housenumber' => '42',
+            'street' => 'Main St',
+            'city' => 'Metropolis',
+            'country' => 'Countryland'
+        ];
+
+        $place = new Place($data);
+        $address = $place->getAddress();
+
+        $this->assertInstanceOf(Address::class, $address);
+        $this->assertEquals('42', $address->getHouseNumber());
+        // Address model doesn't have getStreet() mapped directly from constructor unless it's in the keys.
+        // The Place logic maps 'housenumber' -> 'house_number', but others stay as is.
+        // Address model stores everything in $details.
+        // Let's verify via toArray or specific getters if they exist.
+        // Address has getCity() and getCountry().
+        $this->assertEquals('Metropolis', $address->getCity());
+        $this->assertEquals('Countryland', $address->getCountry());
+        
+        // Verify 'street' is in the raw array
+        $this->assertEquals('Main St', $address->toArray()['street']);
+    }
 }
