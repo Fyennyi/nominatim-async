@@ -24,7 +24,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Fyennyi\\Nominatim\\Tests\\": "tests/"
+            "Tests\\": "tests/"
         }
     }
 }
