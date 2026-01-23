@@ -13,7 +13,7 @@ use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
-use Symfony\Component\Cache\Adapter\Psr16Adapter;
+use Symfony\Component\Cache\Psr16Cache;
 
 class Client
 {
@@ -56,7 +56,7 @@ class Client
             // We'll use ArrayAdapter if available, or a dummy if not.
             // For now, let's assume the user has symfony/cache or similar as dev-dep or provided one.
             // But wait, to be safe, if $cache is null, we should use a null adapter or array adapter.
-            $cache = new Psr16Adapter(new ArrayAdapter());
+            $cache = new Psr16Cache(new ArrayAdapter());
         }
 
         $this->async_cache = new AsyncCacheManager($cache, $rate_limiter);
