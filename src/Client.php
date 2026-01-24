@@ -33,7 +33,7 @@ class Client
      * Constructor for Nominatim Client
      *
      * @param  ClientInterface|null  $http_client  Optional Guzzle client
-     * @param  CacheInterface|null  $cache  Optional PSR-16 cache
+     * @param  CacheInterface|null  $cache  Optional PSR-16 cache (defaults to InMemory ArrayAdapter)
      * @param  string  $user_agent  Custom User-Agent string
      */
     public function __construct(?ClientInterface $http_client = null, ?CacheInterface $cache = null, string $user_agent = self::DEFAULT_USER_AGENT)
@@ -46,16 +46,7 @@ class Client
         $rate_limiter->configure('nominatim_api', 1);
 
         // Setup Cache Manager (Default to ArrayCache if none provided)
-        // If Symfony Cache is not installed, user must provide a PSR-16 implementation.
-        // Assuming Symfony Cache is present or cache is optional.
         if ($cache === null) {
-            // Fallback to array adapter wrapped in PSR-16 if available, or just null logic handling in Manager?
-            // AsyncCacheManager requires PSR-16. Let's create a simple array cache if null.
-            // Note: This requires symfony/cache package or similar. nominatim-async doesn't require it explicitly in composer.json yet?
-            // Let's assume we need to handle null cache. But AsyncCacheManager requires CacheInterface.
-            // We'll use ArrayAdapter if available, or a dummy if not.
-            // For now, let's assume the user has symfony/cache or similar as dev-dep or provided one.
-            // But wait, to be safe, if $cache is null, we should use a null adapter or array adapter.
             $cache = new Psr16Cache(new ArrayAdapter());
         }
 
