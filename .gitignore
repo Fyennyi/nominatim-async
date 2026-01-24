@@ -5,3 +5,5 @@ composer.lock
 coverage-report/
 clover.xml
 phpunit.xml
+__pycache__/
+*.pyc
