@@ -224,6 +224,30 @@ class ClientTest extends TestCase
         $this->assertEquals(402, $places[1]->getPlaceId());
     }
 
+    public function testSearchSingleObjectResponse()
+    {
+        // This covers the single object fallback in processResponse (Line 182)
+        $mockHttpClient = $this->createMock(ClientInterface::class);
+        
+        // Response is a single object, NOT an array of objects
+        $responseBody = json_encode([
+            'place_id' => 501,
+            'display_name' => 'Single Object Place'
+        ]);
+        $response = new Response(200, [], $responseBody);
+        
+        $mockHttpClient->expects($this->once())
+            ->method('requestAsync')
+            ->willReturn(new FulfilledPromise($response));
+
+        $client = new Client($mockHttpClient);
+        $promise = $client->search('test');
+        $places = $promise->wait();
+
+        $this->assertCount(1, $places);
+        $this->assertEquals(501, $places[0]->getPlaceId());
+    }
+
     public function testErrorResponse()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
