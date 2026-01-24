@@ -178,7 +178,18 @@ The `Address` object provides easy access to address components:
 
 ## Caching
 
-You can pass any PSR-16 compatible cache implementation to the `Client` constructor to enable caching of requests (not yet fully implemented in current version, but prepared for).
+This library utilizes `fyennyi/async-cache-php` to provide seamless, non-blocking caching capabilities.
+You can pass any PSR-16 compatible cache implementation (e.g., from `symfony/cache`) to the `Client` constructor.
+
+```php
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Psr16Cache;
+
+$psr16Cache = new Psr16Cache(new FilesystemAdapter());
+$client = new Client(null, $psr16Cache);
+```
+
+By default, requests are cached for **24 hours** to reduce load on the Nominatim servers and ensure compliance with usage policies. The client also implements rate limiting automatically.
 
 ## Contributing
 
