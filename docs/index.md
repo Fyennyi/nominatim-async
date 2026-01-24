@@ -1,5 +1,8 @@
 # Nominatim Async PHP
 
+[![Latest Stable Version](https://img.shields.io/packagist/v/fyennyi/nominatim-async.svg?label=Packagist&logo=packagist)](https://packagist.org/packages/fyennyi/nominatim-async)
+[![License](https://img.shields.io/packagist/l/fyennyi/nominatim-async.svg?label=Licence&logo=open-source-initiative)](https://packagist.org/packages/fyennyi/nominatim-async)
+
 An asynchronous PHP client for the [Nominatim](https://nominatim.org/) API (OpenStreetMap), built on top of Guzzle Promises.
 
 ## Overview
