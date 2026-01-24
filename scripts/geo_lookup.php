@@ -81,7 +81,6 @@ function performTextSearch(string $query, Client $client): array {
     $promise = $client->search($query, [
         'addressdetails' => 1,
         'limit' => 1,
-        'countrycodes' => 'ua', // Focus on Ukraine
         'extratags' => 1,
         'namedetails' => 1
     ]);
