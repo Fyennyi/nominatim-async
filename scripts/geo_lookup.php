@@ -34,7 +34,7 @@ function createResultFromPlace(Place $place, string $matchedBy, ?float $similari
         'name' => $place->getDisplayName(),
         'type' => $place->getType(),
         'category' => $place->getCategory(),
-        'oblast_name' => $address ? $address->getState() : null,
+        'state' => $address ? $address->getState() : null,
         'district_name' => $address ? $address->getCounty() : ($address ? $address->getDistrict() : null),
         'city_name' => $address ? $address->getCity() : ($address ? $address->getTown() : null),
         'country' => $address ? $address->getCountry() : null,
