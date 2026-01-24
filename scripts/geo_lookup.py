@@ -473,8 +473,8 @@ class GeolocationApp(App):
         if result.get('category'):
             lines.append(f"Category: {result['category']}")
 
-        if result.get('oblast_name'):
-            lines.append(f"Oblast: {result['oblast_name']}")
+        if result.get('state'):
+            lines.append(f"State/Region: {result['state']}")
 
         if result.get('district_name'):
             lines.append(f"District: {result['district_name']}")
