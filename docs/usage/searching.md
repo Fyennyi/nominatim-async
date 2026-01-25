@@ -17,7 +17,7 @@ Forward geocoding allows you to convert a text address into geographic coordinat
     })->wait();
     ```
 
-=== "Raw API Response (Reference)"
+=== "Raw API Response"
 
     ```json
     [
