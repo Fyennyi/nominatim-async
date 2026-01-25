@@ -263,4 +263,15 @@ class Client
             $options
         );
     }
+
+    /**
+     * Sets the minimum interval between requests for the rate limiter
+     *
+     * @param  int  $seconds  Minimum interval in seconds
+     * @return void
+     */
+    public function setRateLimitInterval(int $seconds) : void
+    {
+        $this->async_cache->getRateLimiter()->configure('nominatim_api', $seconds);
+    }
 }
