@@ -4,18 +4,36 @@ Forward geocoding allows you to convert a text address into geographic coordinat
 
 ## Simple Search
 
-```php
-<?php
+=== "PHP Model"
 
-$promise = $client->search('Kyiv, Ukraine');
+    ```php
+    $promise = $client->search('Kyiv, Ukraine');
 
-$promise->then(function ($places) {
-    foreach ($places as $place) {
-        echo $place->getDisplayName() . "\n";
-        echo "Lat: " . $place->getLat() . ", Lon: " . $place->getLon() . "\n";
-    }
-})->wait();
-```
+    $promise->then(function ($places) {
+        foreach ($places as $place) {
+            echo $place->getDisplayName() . "\n";
+            echo "Lat: " . $place->getLat() . ", Lon: " . $place->getLon() . "\n";
+        }
+    })->wait();
+    ```
+
+=== "Raw API Response (Reference)"
+
+    ```json
+    [
+      {
+        "place_id": 123456789,
+        "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+        "osm_type": "relation",
+        "osm_id": 421866,
+        "lat": "50.4500336",
+        "lon": "30.5241361",
+        "display_name": "Kyiv, Ukraine",
+        "category": "boundary",
+        "type": "administrative"
+      }
+    ]
+    ```
 
 ## Structured Search
 
