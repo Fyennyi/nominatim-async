@@ -38,6 +38,8 @@ class Place
     private ?string $name;
     private ?string $label;
     private array $admin_levels;
+    /** @var array<int, AddressComponent> */
+    private array $address_components = [];
 
     /**
      * Constructor for Place
@@ -101,7 +103,15 @@ class Place
         $this->admin_levels = $data['admin'] ?? [];
 
         if (isset($data['address']) && is_array($data['address'])) {
-            $this->address = new Address($data['address']);
+            if (array_is_list($data['address'])) {
+                $this->address_components = array_map(
+                    fn(array $component) => new AddressComponent($component),
+                    $data['address']
+                );
+                $this->address = null;
+            } else {
+                $this->address = new Address($data['address']);
+            }
         } else {
             // Try to build address from flat GeocodeJSON properties
             $address_params = [];
@@ -461,5 +471,15 @@ class Place
     public function getAdminLevels() : array
     {
         return $this->admin_levels;
+    }
+
+    /**
+     * Get address components list (from details endpoint)
+     *
+     * @return array<int, AddressComponent> List of address components
+     */
+    public function getAddressComponents() : array
+    {
+        return $this->address_components;
     }
 }
