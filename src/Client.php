@@ -152,7 +152,7 @@ class Client
             $features = $data['features'] ?? [];
             return array_map(function (array $feature) use ($format) {
                 $properties = $feature['properties'] ?? [];
-                
+
                 // For geocodejson, properties are nested under 'geocoding'
                 if ($format === 'geocodejson') {
                     $properties = $properties['geocoding'] ?? $properties;
@@ -168,10 +168,10 @@ class Client
         // Handle single object response (possible in some error cases or specific formats, though typically search returns list)
         // But for consistency, we treat the input as a list of places for standard JSON formats
         // Note: reverse geocoding returns a single object in jsonv2, but we handle that in the reverse method wrapper
-        
+
         // However, nominatim search returns a list. reverse returns object.
         // Let's standardize: this method returns a LIST of Place objects.
-        
+
         if (isset($data['place_id']) || isset($data['error'])) {
              // It's a single object (or error)
              // If it's an error, Place constructor might fail or produce empty object. 
@@ -216,7 +216,7 @@ class Client
     private function requestAsync(string $method, string $path, array $query, bool $decode_json = true) : PromiseInterface
     {
         $cache_key = 'nominatim_' . md5($method . $path . serialize($query));
-        
+
         $options = new CacheOptions(
             ttl: 86400, // 24 hours logical TTL for Geo Data
             rate_limit_key: 'nominatim_api',

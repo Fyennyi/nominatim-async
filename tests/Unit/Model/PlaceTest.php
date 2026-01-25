@@ -185,7 +185,7 @@ class PlaceTest extends TestCase
         // Address has getCity() and getCountry().
         $this->assertEquals('Metropolis', $address->getCity());
         $this->assertEquals('Countryland', $address->getCountry());
-        
+
         // Verify 'street' is in the raw array
         $this->assertEquals('Main St', $address->toArray()['street']);
     }

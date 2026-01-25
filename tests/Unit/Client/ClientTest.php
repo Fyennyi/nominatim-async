@@ -16,7 +16,7 @@ class ClientTest extends TestCase
     public function testSearchGeoJson()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $geojsonResponse = [
             'type' => 'FeatureCollection',
             'features' => [
@@ -61,7 +61,7 @@ class ClientTest extends TestCase
     public function testReverseGeocodeJson()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $geocodeJsonResponse = [
             'type' => 'FeatureCollection',
             'features' => [
@@ -114,12 +114,12 @@ class ClientTest extends TestCase
     public function testSearchStructured()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $responseBody = json_encode([
             ['place_id' => 101, 'display_name' => 'Structured Place']
         ]);
         $response = new Response(200, [], $responseBody);
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->with(
@@ -145,12 +145,12 @@ class ClientTest extends TestCase
     public function testLookup()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $responseBody = json_encode([
             ['place_id' => 201, 'osm_type' => 'W', 'osm_id' => 12345]
         ]);
         $response = new Response(200, [], $responseBody);
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->with(
@@ -173,14 +173,14 @@ class ClientTest extends TestCase
     public function testDetails()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         // details returns a single object
         $responseBody = json_encode([
             'place_id' => 301,
             'category' => 'highway'
         ]);
         $response = new Response(200, [], $responseBody);
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->with(
@@ -204,13 +204,13 @@ class ClientTest extends TestCase
     public function testSearchStandardJsonList()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $responseBody = json_encode([
             ['place_id' => 401],
             ['place_id' => 402]
         ]);
         $response = new Response(200, [], $responseBody);
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->willReturn(new FulfilledPromise($response));
@@ -228,14 +228,14 @@ class ClientTest extends TestCase
     {
         // This covers the single object fallback in processResponse (Line 182)
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         // Response is a single object, NOT an array of objects
         $responseBody = json_encode([
             'place_id' => 501,
             'display_name' => 'Single Object Place'
         ]);
         $response = new Response(200, [], $responseBody);
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->willReturn(new FulfilledPromise($response));
@@ -251,12 +251,12 @@ class ClientTest extends TestCase
     public function testErrorResponse()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $responseBody = json_encode([
             'error' => 'Unable to geocode'
         ]);
         $response = new Response(200, [], $responseBody);
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->willReturn(new FulfilledPromise($response));
@@ -272,54 +272,54 @@ class ClientTest extends TestCase
     public function testInvalidJson()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $response = new Response(200, [], 'invalid-json-{');
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->willReturn(new FulfilledPromise($response));
 
         $client = new Client($mockHttpClient);
-        
+
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('Failed to decode JSON response');
-        
+
         $client->search('test')->wait();
     }
 
     public function testInvalidDataFormat()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $response = new Response(200, [], 'null');
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->willReturn(new FulfilledPromise($response));
 
         $client = new Client($mockHttpClient);
-        
+
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('API returned invalid data format');
-        
+
         $client->search('test')->wait();
     }
 
     public function testRequestException()
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
-        
+
         $exception = new \Exception('Network Error');
-        
+
         $mockHttpClient->expects($this->once())
             ->method('requestAsync')
             ->willReturn(new RejectedPromise($exception));
 
         $client = new Client($mockHttpClient);
-        
+
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('HTTP request failed: Network Error');
-        
+
         $client->search('test')->wait();
     }
 }

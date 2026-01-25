@@ -50,7 +50,7 @@ class Place
         $this->licence = $data['licence'] ?? null;
         $this->osm_type = $data['osm_type'] ?? null;
         $this->osm_id = isset($data['osm_id']) ? (int) $data['osm_id'] : null;
-        
+
         // Handle coordinates from either top-level lat/lon or centroid object
         if (isset($data['centroid']['coordinates']) && is_array($data['centroid']['coordinates'])) {
             $this->lon = (float) $data['centroid']['coordinates'][0];
@@ -61,24 +61,24 @@ class Place
         }
 
         $this->display_name = $data['display_name'] ?? $data['label'] ?? '';
-        
+
         // Map category/type from jsonv2 (category/type), json (class/type) or geocodejson (osm_key/osm_value)
         $this->category = $data['category'] ?? $data['class'] ?? $data['osm_key'] ?? null;
         $this->type = $data['type'] ?? $data['osm_value'] ?? null;
-        
+
         $this->importance = isset($data['importance']) ? (float) $data['importance'] : null;
-        
+
         // Handle rank fields which might have different keys in details response
         $this->place_rank = isset($data['place_rank']) ? (int) $data['place_rank'] : (isset($data['rank_search']) ? (int) $data['rank_search'] : null);
         $this->address_rank = isset($data['address_rank']) ? (int) $data['address_rank'] : (isset($data['rank_address']) ? (int) $data['rank_address'] : null);
-        
+
         $this->bounding_box = isset($data['boundingbox']) ? array_map('floatval', (array) $data['boundingbox']) : null;
         $this->icon = $data['icon'] ?? null;
         $this->extra_tags = $data['extratags'] ?? $data['extra'] ?? []; // geocodejson uses 'extra'
-        
+
         // Map names from either namedetails or names
         $this->name_details = $data['namedetails'] ?? $data['names'] ?? [];
-        
+
         // Map geometry
         $this->geometry = $data['geojson'] ?? $data['geometry'] ?? $data['svg'] ?? $data['geotext'] ?? $data['geokml'] ?? null;
         $this->entrances = $data['entrances'] ?? [];

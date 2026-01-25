@@ -153,7 +153,7 @@ class AddressTest extends TestCase
         $this->assertEquals('Bridge', $address->getBridge());
         $this->assertEquals('Tunnel', $address->getTunnel());
         $this->assertEquals('River', $address->getWaterway());
-        
+
         $this->assertEquals($data, $address->toArray());
     }
 }
