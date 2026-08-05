@@ -13,8 +13,8 @@ use Psr\SimpleCache\CacheInterface;
 use React\Promise\PromiseInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Psr16Cache;
-use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 
 class Client
@@ -32,8 +32,8 @@ class Client
     /** @var CacheInterface The cache adapter instance */
     private CacheInterface $cache;
 
-    /** @var LimiterInterface|null The rate limiter instance */
-    private ?LimiterInterface $rate_limiter = null;
+    /** @var RateLimiterFactoryInterface|null The rate limiter instance */
+    private ?RateLimiterFactoryInterface $rate_limiter = null;
 
     /** @var string The user agent string */
     private string $user_agent;
@@ -41,16 +41,16 @@ class Client
     /**
      * Constructor for Nominatim Client
      *
-     * @param ClientInterface|null  $http_client  Optional Guzzle client
-     * @param CacheInterface|null   $cache        Optional PSR-16 cache (defaults to InMemory ArrayAdapter)
-     * @param string                $user_agent   Custom User-Agent string
-     * @param LimiterInterface|null $rate_limiter Optional Symfony Rate Limiter (defaults to 1 req/sec in-memory)
+     * @param ClientInterface|null             $http_client  Optional Guzzle client
+     * @param CacheInterface|null              $cache        Optional PSR-16 cache (defaults to InMemory ArrayAdapter)
+     * @param string                           $user_agent   Custom User-Agent string
+     * @param RateLimiterFactoryInterface|null $rate_limiter Optional Symfony Rate Limiter factory (defaults to 1 req/sec in-memory)
      */
     public function __construct(
         ?ClientInterface $http_client = null,
         ?CacheInterface $cache = null,
         string $user_agent = self::DEFAULT_USER_AGENT,
-        ?LimiterInterface $rate_limiter = null
+        ?RateLimiterFactoryInterface $rate_limiter = null
     ) {
         $this->http_client = $http_client ?? new GuzzleClient(['base_uri' => self::BASE_URL]);
         $this->user_agent = $user_agent;
@@ -297,21 +297,21 @@ class Client
     }
 
     /**
-     * Sets a custom Symfony rate limiter.
+     * Sets a custom Symfony rate limiter factory.
      *
-     * @param  LimiterInterface|null $rate_limiter Rate limiter instance (null to disable)
+     * @param  RateLimiterFactoryInterface|null $rate_limiter Rate limiter factory instance (null to disable)
      * @return void
      */
-    public function setRateLimiter(?LimiterInterface $rate_limiter) : void
+    public function setRateLimiter(?RateLimiterFactoryInterface $rate_limiter) : void
     {
         $this->rate_limiter = $rate_limiter;
         $this->rebuildAsyncCacheManager();
     }
 
     /**
-     * Builds a default rate limiter with a fixed window policy.
+     * Builds a default rate limiter factory with a fixed window policy.
      */
-    private function createRateLimiter(int $seconds) : LimiterInterface
+    private function createRateLimiter(int $seconds) : RateLimiterFactoryInterface
     {
         $seconds = max(1, $seconds);
 
@@ -322,7 +322,7 @@ class Client
             'interval' => sprintf('%d seconds', $seconds),
         ], new InMemoryStorage());
 
-        return $factory->create();
+        return $factory;
     }
 
     /**
