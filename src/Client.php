@@ -4,14 +4,16 @@ namespace Fyennyi\Nominatim;
 
 use Fyennyi\AsyncCache\AsyncCacheManager;
 use Fyennyi\AsyncCache\CacheOptions;
-use Fyennyi\AsyncCache\RateLimiter\InMemoryRateLimiter;
 use Fyennyi\Nominatim\Exception\TransportException;
 use Fyennyi\Nominatim\Model\Place;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Promise\PromiseInterface;
+use React\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\RateLimiter\LimiterInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Psr16Cache;
 
@@ -19,12 +21,19 @@ class Client
 {
     private const DEFAULT_USER_AGENT = 'fyennyi-nominatim-php/1.0';
     private const BASE_URL = 'https://nominatim.openstreetmap.org/';
+    private const RATE_LIMIT_KEY = 'nominatim_api';
 
     /** @var ClientInterface The HTTP client instance */
     private ClientInterface $http_client;
 
     /** @var AsyncCacheManager The async cache manager instance */
     private AsyncCacheManager $async_cache;
+
+    /** @var CacheInterface The cache adapter instance */
+    private CacheInterface $cache;
+
+    /** @var LimiterInterface|null The rate limiter instance */
+    private ?LimiterInterface $rate_limiter = null;
 
     /** @var string The user agent string */
     private string $user_agent;
@@ -35,22 +44,25 @@ class Client
      * @param  ClientInterface|null  $http_client  Optional Guzzle client
      * @param  CacheInterface|null  $cache  Optional PSR-16 cache (defaults to InMemory ArrayAdapter)
      * @param  string  $user_agent  Custom User-Agent string
+     * @param  LimiterInterface|null  $rate_limiter  Optional Symfony Rate Limiter (defaults to 1 req/sec in-memory)
      */
-    public function __construct(?ClientInterface $http_client = null, ?CacheInterface $cache = null, string $user_agent = self::DEFAULT_USER_AGENT)
+    public function __construct(
+        ?ClientInterface $http_client = null,
+        ?CacheInterface $cache = null,
+        string $user_agent = self::DEFAULT_USER_AGENT,
+        ?LimiterInterface $rate_limiter = null
+    )
     {
         $this->http_client = $http_client ?? new GuzzleClient(['base_uri' => self::BASE_URL]);
         $this->user_agent = $user_agent;
 
-        // Setup Rate Limiter (Nominatim Usage Policy: Max 1 request per second)
-        $rate_limiter = new InMemoryRateLimiter();
-        $rate_limiter->configure('nominatim_api', 1);
-
         // Setup Cache Manager (Default to ArrayCache if none provided)
-        if ($cache === null) {
-            $cache = new Psr16Cache(new ArrayAdapter());
-        }
+        $this->cache = $cache ?? new Psr16Cache(new ArrayAdapter());
 
-        $this->async_cache = new AsyncCacheManager($cache, $rate_limiter);
+        // Setup Rate Limiter (Nominatim Usage Policy: Max 1 request per second)
+        $this->rate_limiter = $rate_limiter ?? $this->createRateLimiter(1);
+
+        $this->rebuildAsyncCacheManager();
     }
 
     /**
@@ -71,7 +83,7 @@ class Client
             $query_params['q'] = $query;
         }
 
-        return $this->requestAsync('GET', 'search', $query_params)
+        return $this->request('GET', 'search', $query_params)
             ->then(function (array $data) use ($query_params) {
                 return $this->processResponse($data, $query_params['format']);
             });
@@ -93,7 +105,7 @@ class Client
             'lon' => $lon,
         ]);
 
-        return $this->requestAsync('GET', 'reverse', $query_params)
+        return $this->request('GET', 'reverse', $query_params)
             ->then(function (array $data) use ($query_params) {
                 $places = $this->processResponse($data, $query_params['format']);
                 return $places[0] ?? null;
@@ -114,7 +126,7 @@ class Client
             'osm_ids' => implode(',', $osm_ids),
         ]);
 
-        return $this->requestAsync('GET', 'lookup', $query_params)
+        return $this->request('GET', 'lookup', $query_params)
             ->then(function (array $data) use ($query_params) {
                 return $this->processResponse($data, $query_params['format']);
             });
@@ -133,7 +145,7 @@ class Client
             'format' => 'json',
         ]);
 
-        return $this->requestAsync('GET', 'details', $query_params)
+        return $this->request('GET', 'details', $query_params)
             ->then(function (array $data) {
                 return new Place($data);
             });
@@ -199,11 +211,11 @@ class Client
             throw new \InvalidArgumentException('Invalid format. Supported formats: json, text');
         }
 
-        return $this->requestAsync('GET', 'status', ['format' => $format], $format === 'json');
+        return $this->request('GET', 'status', ['format' => $format], $format === 'json');
     }
 
     /**
-     * Internal helper to perform asynchronous HTTP requests
+     * Internal helper to perform HTTP requests
      *
      * @param  string  $method  HTTP method (GET, POST, etc.)
      * @param  string  $path  API endpoint path
@@ -213,13 +225,13 @@ class Client
      *
      * @throws TransportException If request fails or JSON decoding fails
      */
-    private function requestAsync(string $method, string $path, array $query, bool $decode_json = true) : PromiseInterface
+    private function request(string $method, string $path, array $query, bool $decode_json = true) : PromiseInterface
     {
         $cache_key = 'nominatim_' . md5($method . $path . serialize($query));
 
         $options = new CacheOptions(
             ttl: 86400, // 24 hours logical TTL for Geo Data
-            rate_limit_key: 'nominatim_api',
+            rate_limit_key: self::RATE_LIMIT_KEY,
             serve_stale_if_limited: true
         );
 
@@ -234,34 +246,46 @@ class Client
                     ]
                 ];
 
-                return $this->http_client->requestAsync($method, $path, $http_options)
-                    ->then(
-                        function (ResponseInterface $response) use ($decode_json) {
-                            $body = $response->getBody()->getContents();
+                try {
+                    $response = $this->http_client->request($method, $path, $http_options);
+                } catch (\Throwable $e) {
+                    throw new TransportException('HTTP request failed: ' . $e->getMessage(), 0, $e);
+                }
 
-                            if (! $decode_json) {
-                                return $body;
-                            }
-
-                            $data = json_decode($body, true);
-
-                            if (JSON_ERROR_NONE !== json_last_error()) {
-                                throw new TransportException('Failed to decode JSON response: ' . json_last_error_msg());
-                            }
-
-                            if (! is_array($data)) {
-                                throw new TransportException('API returned invalid data format');
-                            }
-
-                            return $data;
-                        },
-                        function (\Throwable $e) {
-                            throw new TransportException('HTTP request failed: ' . $e->getMessage(), 0, $e);
-                        }
-                    );
+                return $this->parseResponse($response, $decode_json);
             },
             $options
         );
+    }
+
+    /**
+     * Parses the HTTP response and validates JSON if requested.
+     *
+     * @param  ResponseInterface  $response
+     * @param  bool  $decode_json
+     * @return array|string
+     *
+     * @throws TransportException
+     */
+    private function parseResponse(ResponseInterface $response, bool $decode_json) : array|string
+    {
+        $body = $response->getBody()->getContents();
+
+        if (! $decode_json) {
+            return $body;
+        }
+
+        $data = json_decode($body, true);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new TransportException('Failed to decode JSON response: ' . json_last_error_msg());
+        }
+
+        if (! is_array($data)) {
+            throw new TransportException('API returned invalid data format');
+        }
+
+        return $data;
     }
 
     /**
@@ -272,6 +296,50 @@ class Client
      */
     public function setRateLimitInterval(int $seconds) : void
     {
-        $this->async_cache->getRateLimiter()->configure('nominatim_api', $seconds);
+        $this->rate_limiter = $this->createRateLimiter($seconds);
+        $this->rebuildAsyncCacheManager();
+    }
+
+    /**
+     * Sets a custom Symfony rate limiter.
+     *
+     * @param  LimiterInterface|null  $rate_limiter  Rate limiter instance (null to disable)
+     * @return void
+     */
+    public function setRateLimiter(?LimiterInterface $rate_limiter) : void
+    {
+        $this->rate_limiter = $rate_limiter;
+        $this->rebuildAsyncCacheManager();
+    }
+
+    /**
+     * Builds a default rate limiter with a fixed window policy.
+     */
+    private function createRateLimiter(int $seconds) : LimiterInterface
+    {
+        $seconds = max(1, $seconds);
+
+        $factory = new RateLimiterFactory([
+            'id' => self::RATE_LIMIT_KEY,
+            'policy' => 'fixed_window',
+            'limit' => 1,
+            'interval' => sprintf('%d seconds', $seconds),
+        ], new InMemoryStorage());
+
+        return $factory->create();
+    }
+
+    /**
+     * Rebuilds the async cache manager with the current cache and limiter configuration.
+     */
+    private function rebuildAsyncCacheManager() : void
+    {
+        $builder = AsyncCacheManager::configure($this->cache);
+
+        if ($this->rate_limiter !== null) {
+            $builder->withRateLimiter($this->rate_limiter);
+        }
+
+        $this->async_cache = new AsyncCacheManager($builder->build());
     }
 }
