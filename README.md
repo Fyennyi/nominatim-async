@@ -1,3 +1,5 @@
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct.svg)](https://stand-with-ukraine.pp.ua)
+
 # Nominatim Async PHP Client
 
 [![Latest Stable Version](https://img.shields.io/packagist/v/fyennyi/nominatim-async.svg?label=Packagist&logo=packagist)](https://packagist.org/packages/fyennyi/nominatim-async)
