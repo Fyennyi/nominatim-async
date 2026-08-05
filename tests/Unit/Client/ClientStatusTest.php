@@ -4,7 +4,6 @@ namespace Tests\Unit\Client;
 
 use Fyennyi\Nominatim\Client;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Promise\FulfilledPromise;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
@@ -23,10 +22,9 @@ class ClientStatusTest extends TestCase
         ];
 
         $response = new Response(200, [], json_encode($statusResponse));
-        $promise = new FulfilledPromise($response);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'status',
@@ -35,11 +33,10 @@ class ClientStatusTest extends TestCase
                         && isset($options['headers']['Accept']) && 'application/json' === $options['headers']['Accept'];
                 })
             )
-            ->willReturn($promise);
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->status('json'); // Explicit json
-        $result = $promise->wait();
+        $result = \React\Async\await($client->status('json'));
 
         $this->assertIsArray($result);
         $this->assertEquals(0, $result['status']);
@@ -52,10 +49,9 @@ class ClientStatusTest extends TestCase
 
         $statusResponse = ['status' => 0, 'message' => 'OK'];
         $response = new Response(200, [], json_encode($statusResponse));
-        $promise = new FulfilledPromise($response);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'status',
@@ -63,11 +59,10 @@ class ClientStatusTest extends TestCase
                     return isset($options['query']['format']) && 'json' === $options['query']['format'];
                 })
             )
-            ->willReturn($promise);
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->status(); // Default
-        $result = $promise->wait();
+        $result = \React\Async\await($client->status());
 
         $this->assertIsArray($result);
     }
@@ -77,12 +72,10 @@ class ClientStatusTest extends TestCase
         $mockHttpClient = $this->createMock(ClientInterface::class);
 
         $statusResponse = 'OK';
-
         $response = new Response(200, [], $statusResponse);
-        $promise = new FulfilledPromise($response);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'status',
@@ -91,11 +84,10 @@ class ClientStatusTest extends TestCase
                         && isset($options['headers']['Accept']) && 'text/plain' === $options['headers']['Accept'];
                 })
             )
-            ->willReturn($promise);
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->status('text');
-        $result = $promise->wait();
+        $result = \React\Async\await($client->status('text'));
 
         $this->assertIsString($result);
         $this->assertEquals('OK', $result);
