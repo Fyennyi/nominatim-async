@@ -38,26 +38,22 @@ Search for a place by query string or structured parameters.
 
 ```php
 // Simple query
-$promise = $client->search('Kyiv, Ukraine');
+$places = \React\Async\await($client->search('Kyiv, Ukraine'));
 
-$promise->then(function ($places) {
-    foreach ($places as $place) {
-        echo $place->getDisplayName() . "\n";
-        echo "Lat: " . $place->getLat() . ", Lon: " . $place->getLon() . "\n";
-    }
-})->wait();
+foreach ($places as $place) {
+    echo $place->getDisplayName() . "\n";
+    echo "Lat: " . $place->getLat() . ", Lon: " . $place->getLon() . "\n";
+}
 
 // Structured query with extra parameters
-$promise = $client->search([
+$places = \React\Async\await($client->search([
     'street' => 'Khreshchatyk',
     'city' => 'Kyiv',
     'country' => 'Ukraine'
 ], [
     'addressdetails' => 1,
     'limit' => 5
-]);
-
-$places = $promise->wait();
+]));
 ```
 
 ### Reverse Geocoding
@@ -68,16 +64,14 @@ Find a place by its coordinates (latitude and longitude).
 $lat = 50.4501;
 $lon = 30.5234;
 
-$client->reverse($lat, $lon, ['zoom' => 18])
-    ->then(function ($place) {
-        if ($place) {
-            echo "Found: " . $place->getDisplayName() . "\n";
-            if ($address = $place->getAddress()) {
-                echo "City: " . $address->getCity() . "\n";
-            }
-        }
-    })
-    ->wait();
+$place = \React\Async\await($client->reverse($lat, $lon, ['zoom' => 18]));
+
+if ($place) {
+    echo "Found: " . $place->getDisplayName() . "\n";
+    if ($address = $place->getAddress()) {
+        echo "City: " . $address->getCity() . "\n";
+    }
+}
 ```
 
 ### Address Lookup
@@ -87,14 +81,12 @@ Look up details for specific OSM objects (Nodes, Ways, Relations).
 ```php
 $osm_ids = ['R146656', 'N240109189'];
 
-$client->lookup($osm_ids, ['addressdetails' => 1])
-    ->then(function ($places) {
-        foreach ($places as $place) {
-            echo "ID: " . $place->getOsmType() . $place->getOsmId() . "\n";
-            echo "Name: " . $place->getDisplayName() . "\n";
-        }
-    })
-    ->wait();
+$places = \React\Async\await($client->lookup($osm_ids, ['addressdetails' => 1]));
+
+foreach ($places as $place) {
+    echo "ID: " . $place->getOsmType() . $place->getOsmId() . "\n";
+    echo "Name: " . $place->getDisplayName() . "\n";
+}
 ```
 
 ### Place Details
@@ -102,12 +94,10 @@ $client->lookup($osm_ids, ['addressdetails' => 1])
 Get detailed information about a place by its ID.
 
 ```php
-$client->details(['place_id' => 123456])
-    ->then(function ($place) {
-        echo "Category: " . $place->getCategory() . "\n";
-        echo "Type: " . $place->getType() . "\n";
-    })
-    ->wait();
+$place = \React\Async\await($client->details(['place_id' => 123456]));
+
+echo "Category: " . $place->getCategory() . "\n";
+echo "Type: " . $place->getType() . "\n";
 ```
 
 ### Server Status
@@ -116,24 +106,22 @@ Check the status of the Nominatim server.
 
 ```php
 // Get status as array
-$client->status('json')
-    ->then(function ($status) {
-        echo "Status: " . $status['status'] . "\n";
-        echo "Message: " . $status['message'] . "\n";
-    })
-    ->wait();
+$status = \React\Async\await($client->status('json'));
+
+echo "Status: " . $status['status'] . "\n";
+echo "Message: " . $status['message'] . "\n";
 
 // Get status as text
-$text = $client->status('text')->wait();
+$text = \React\Async\await($client->status('text'));
 echo $text; // "OK"
 ```
 
 ## Asynchronous Operations
 
-The main advantage of this library is the ability to run multiple requests concurrently using Guzzle Promises.
+The main advantage of this library is the ability to run multiple requests concurrently using React Promises.
 
 ```php
-use GuzzleHttp\Promise\Utils;
+use React\Promise\PromiseInterface;
 
 $promises = [
     'kyiv' => $client->search('Kyiv'),
@@ -141,15 +129,15 @@ $promises = [
     'reverse' => $client->reverse(50.45, 30.52),
 ];
 
-Utils::all($promises)->then(function ($results) {
-    $kyiv_places = $results['kyiv'];
-    $lviv_places = $results['lviv'];
-    $reverse_place = $results['reverse'];
+$results = \React\Async\await(\React\Promise\all($promises));
 
-    echo "Found " . count($kyiv_places) . " places in Kyiv.\n";
-    echo "Found " . count($lviv_places) . " places in Lviv.\n";
-    echo "Reverse result: " . ($reverse_place ? $reverse_place->getDisplayName() : 'None') . "\n";
-})->wait();
+$kyiv_places = $results['kyiv'];
+$lviv_places = $results['lviv'];
+$reverse_place = $results['reverse'];
+
+echo "Found " . count($kyiv_places) . " places in Kyiv.\n";
+echo "Found " . count($lviv_places) . " places in Lviv.\n";
+echo "Reverse result: " . ($reverse_place ? $reverse_place->getDisplayName() : 'None') . "\n";
 ```
 
 ## Models
