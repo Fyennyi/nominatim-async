@@ -3,6 +3,7 @@
 namespace Tests\Unit\Model;
 
 use Fyennyi\Nominatim\Model\Address;
+use Fyennyi\Nominatim\Model\AddressComponent;
 use Fyennyi\Nominatim\Model\Place;
 use PHPUnit\Framework\TestCase;
 
@@ -188,5 +189,35 @@ class PlaceTest extends TestCase
 
         // Verify 'street' is in the raw array
         $this->assertEquals('Main St', $address->toArray()['street']);
+    }
+
+    public function testAddressComponentsAreMappedFromList()
+    {
+        $data = [
+            'place_id' => 1,
+            'display_name' => 'Test',
+            'lat' => 50.0,
+            'lon' => 30.0,
+            'address' => [
+                ['localname' => 'Kyiv', 'type' => 'city', 'rank_address' => 10],
+                ['localname' => 'Ukraine', 'type' => 'country', 'rank_address' => 4],
+            ],
+        ];
+
+        $place = new Place($data);
+
+        $components = $place->getAddressComponents();
+
+        $this->assertCount(2, $components);
+        $this->assertInstanceOf(AddressComponent::class, $components[0]);
+        $this->assertSame('Kyiv', $components[0]->getLocalName());
+        $this->assertSame('city', $components[0]->getType());
+        $this->assertSame(10, $components[0]->getRankAddress());
+
+        $this->assertSame('Ukraine', $components[1]->getLocalName());
+        $this->assertSame('country', $components[1]->getType());
+        $this->assertSame(4, $components[1]->getRankAddress());
+
+        $this->assertNull($place->getAddress());
     }
 }
