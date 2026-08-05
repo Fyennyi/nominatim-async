@@ -20,7 +20,7 @@ composer require fyennyi/nominatim-async
 
 ### Basic Setup
 
-First, create a client instance. You can optionally pass a custom Guzzle client and a PSR-16 cache adapter.
+First, create a client instance. You can optionally pass a custom Guzzle client, a PSR-16 cache adapter, and a Symfony Rate Limiter.
 
 ```php
 require 'vendor/autoload.php';
@@ -189,7 +189,26 @@ $psr16Cache = new Psr16Cache(new FilesystemAdapter());
 $client = new Client(null, $psr16Cache);
 ```
 
-By default, requests are cached for **24 hours** to reduce load on the Nominatim servers and ensure compliance with usage policies. The client also implements rate limiting automatically.
+By default, requests are cached for **24 hours** to reduce load on the Nominatim servers and ensure compliance with usage policies. The client also implements rate limiting automatically (1 request/sec) using Symfony Rate Limiter.
+
+### Custom Rate Limiter
+
+You can provide your own Symfony rate limiter implementation:
+
+```php
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+
+$factory = new RateLimiterFactory([
+    'id' => 'nominatim_api',
+    'policy' => 'fixed_window',
+    'limit' => 1,
+    'interval' => '1 second',
+], new InMemoryStorage());
+
+$limiter = $factory->create();
+$client = new Client(null, $psr16Cache, 'MyApp/1.0', $limiter);
+```
 
 ## Contributing
 
