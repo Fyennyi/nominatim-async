@@ -25,11 +25,24 @@ By default, all successful requests are cached for **24 hours**. This ensures:
 
 ## Rate Limiting
 
-Nominatim limits public API usage to **1 request per second**. 
+Nominatim limits public API usage to **1 request per second**.
 
-The library includes an internal rate limiter that:
-- Queues requests if they are too frequent.
-- Returns stale data from cache (if available) if the rate limit is hit, preventing your application from blocking.
+The library uses **Symfony Rate Limiter** by default and configures a 1 req/sec in-memory limiter. You can provide your own limiter if you need a different policy or storage backend:
+
+```php
+use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
+
+$factory = new RateLimiterFactory([
+	'id' => 'nominatim_api',
+	'policy' => 'fixed_window',
+	'limit' => 1,
+	'interval' => '1 second',
+], new InMemoryStorage());
+
+$limiter = $factory->create();
+$client = new Client(null, $cache, 'MyCoolApp/1.0', $limiter);
+```
 
 ## User-Agent Requirement
 
