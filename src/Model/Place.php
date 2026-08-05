@@ -44,7 +44,7 @@ class Place
     /**
      * Constructor for Place
      *
-     * @param  array  $data  Raw API response data
+     * @param array $data Raw API response data
      */
     public function __construct(array $data)
     {
@@ -105,7 +105,7 @@ class Place
         if (isset($data['address']) && is_array($data['address'])) {
             if (array_is_list($data['address'])) {
                 $this->address_components = array_map(
-                    fn(array $component) => new AddressComponent($component),
+                    fn (array $component) => new AddressComponent($component),
                     $data['address']
                 );
                 $this->address = null;
@@ -121,7 +121,7 @@ class Place
                     // Map 'housenumber' to 'house_number' for consistency with Address model keys if needed
                     // Address model uses 'house_number', but constructs from array keys.
                     // Let's check Address model logic. It looks for 'house_number'.
-                    $target_key = ($key === 'housenumber') ? 'house_number' : $key;
+                    $target_key = ('housenumber' === $key) ? 'house_number' : $key;
                     $address_params[$target_key] = $data[$key];
                 }
             }

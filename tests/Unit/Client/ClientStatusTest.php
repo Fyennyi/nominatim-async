@@ -31,8 +31,8 @@ class ClientStatusTest extends TestCase
                 'GET',
                 'status',
                 $this->callback(function ($options) {
-                    return isset($options['query']['format']) && $options['query']['format'] === 'json'
-                        && isset($options['headers']['Accept']) && $options['headers']['Accept'] === 'application/json';
+                    return isset($options['query']['format']) && 'json' === $options['query']['format']
+                        && isset($options['headers']['Accept']) && 'application/json' === $options['headers']['Accept'];
                 })
             )
             ->willReturn($promise);
@@ -60,7 +60,7 @@ class ClientStatusTest extends TestCase
                 'GET',
                 'status',
                 $this->callback(function ($options) {
-                    return isset($options['query']['format']) && $options['query']['format'] === 'json';
+                    return isset($options['query']['format']) && 'json' === $options['query']['format'];
                 })
             )
             ->willReturn($promise);
@@ -87,8 +87,8 @@ class ClientStatusTest extends TestCase
                 'GET',
                 'status',
                 $this->callback(function ($options) {
-                    return isset($options['query']['format']) && $options['query']['format'] === 'text'
-                        && isset($options['headers']['Accept']) && $options['headers']['Accept'] === 'text/plain';
+                    return isset($options['query']['format']) && 'text' === $options['query']['format']
+                        && isset($options['headers']['Accept']) && 'text/plain' === $options['headers']['Accept'];
                 })
             )
             ->willReturn($promise);

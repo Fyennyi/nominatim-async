@@ -16,7 +16,7 @@ class AddressComponent
     /**
      * Constructor for AddressComponent
      *
-     * @param  array<string, mixed>  $data  Raw component data
+     * @param array<string, mixed> $data Raw component data
      */
     public function __construct(array $data)
     {

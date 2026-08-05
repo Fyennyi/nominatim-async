@@ -8,14 +8,14 @@ use Fyennyi\Nominatim\Exception\TransportException;
 use Fyennyi\Nominatim\Model\Place;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\ClientInterface;
-use React\Promise\PromiseInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\CacheInterface;
+use React\Promise\PromiseInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Psr16Cache;
 use Symfony\Component\RateLimiter\LimiterInterface;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
-use Symfony\Component\Cache\Psr16Cache;
 
 class Client
 {
@@ -41,18 +41,17 @@ class Client
     /**
      * Constructor for Nominatim Client
      *
-     * @param  ClientInterface|null  $http_client  Optional Guzzle client
-     * @param  CacheInterface|null  $cache  Optional PSR-16 cache (defaults to InMemory ArrayAdapter)
-     * @param  string  $user_agent  Custom User-Agent string
-     * @param  LimiterInterface|null  $rate_limiter  Optional Symfony Rate Limiter (defaults to 1 req/sec in-memory)
+     * @param ClientInterface|null  $http_client  Optional Guzzle client
+     * @param CacheInterface|null   $cache        Optional PSR-16 cache (defaults to InMemory ArrayAdapter)
+     * @param string                $user_agent   Custom User-Agent string
+     * @param LimiterInterface|null $rate_limiter Optional Symfony Rate Limiter (defaults to 1 req/sec in-memory)
      */
     public function __construct(
         ?ClientInterface $http_client = null,
         ?CacheInterface $cache = null,
         string $user_agent = self::DEFAULT_USER_AGENT,
         ?LimiterInterface $rate_limiter = null
-    )
-    {
+    ) {
         $this->http_client = $http_client ?? new GuzzleClient(['base_uri' => self::BASE_URL]);
         $this->user_agent = $user_agent;
 
@@ -68,9 +67,9 @@ class Client
     /**
      * Searches for a place by query string or structured address
      *
-     * @param  string|array<string, string>  $query  Search query string or structured array
-     * @param  array<string, mixed>  $params  Optional query parameters
-     * @return PromiseInterface Promise that resolves to array<int, Place>
+     * @param  string|array<string, string> $query  Search query string or structured array
+     * @param  array<string, mixed>         $params Optional query parameters
+     * @return PromiseInterface             Promise that resolves to array<int, Place>
      */
     public function search(string|array $query, array $params = []) : PromiseInterface
     {
@@ -92,10 +91,10 @@ class Client
     /**
      * Performs reverse geocoding for coordinates
      *
-     * @param  float  $lat  Latitude
-     * @param  float  $lon  Longitude
-     * @param  array<string, mixed>  $params  Optional query parameters
-     * @return PromiseInterface Promise that resolves to Place|null
+     * @param  float                $lat    Latitude
+     * @param  float                $lon    Longitude
+     * @param  array<string, mixed> $params Optional query parameters
+     * @return PromiseInterface     Promise that resolves to Place|null
      */
     public function reverse(float $lat, float $lon, array $params = []) : PromiseInterface
     {
@@ -115,9 +114,9 @@ class Client
     /**
      * Looks up address details for OSM objects
      *
-     * @param  array<string>  $osm_ids  List of OSM IDs (e.g. ['R146656', 'N240109189'])
-     * @param  array<string, mixed>  $params  Optional query parameters
-     * @return PromiseInterface Promise that resolves to array<int, Place>
+     * @param  array<string>        $osm_ids List of OSM IDs (e.g. ['R146656', 'N240109189'])
+     * @param  array<string, mixed> $params  Optional query parameters
+     * @return PromiseInterface     Promise that resolves to array<int, Place>
      */
     public function lookup(array $osm_ids, array $params = []) : PromiseInterface
     {
@@ -135,8 +134,8 @@ class Client
     /**
      * Get details of a place by OSM ID or Place ID
      *
-     * @param  array<string, mixed>  $params  Query parameters (e.g., ['osmtype' => 'W', 'osmid' => 123] or ['place_id' => 123])
-     * @return PromiseInterface Promise that resolves to Place
+     * @param  array<string, mixed> $params Query parameters (e.g., ['osmtype' => 'W', 'osmid' => 123] or ['place_id' => 123])
+     * @return PromiseInterface     Promise that resolves to Place
      */
     public function details(array $params) : PromiseInterface
     {
@@ -154,19 +153,19 @@ class Client
     /**
      * Processes the API response based on the format
      *
-     * @param  array  $data  Decoded JSON response
-     * @param  string  $format  The format requested
+     * @param  array             $data   Decoded JSON response
+     * @param  string            $format The format requested
      * @return array<int, Place> Array of Place objects
      */
     private function processResponse(array $data, string $format) : array
     {
-        if ($format === 'geojson' || $format === 'geocodejson') {
+        if ('geojson' === $format || 'geocodejson' === $format) {
             $features = $data['features'] ?? [];
             return array_map(function (array $feature) use ($format) {
                 $properties = $feature['properties'] ?? [];
 
                 // For geocodejson, properties are nested under 'geocoding'
-                if ($format === 'geocodejson') {
+                if ('geocodejson' === $format) {
                     $properties = $properties['geocoding'] ?? $properties;
                 }
 
@@ -185,24 +184,23 @@ class Client
         // Let's standardize: this method returns a LIST of Place objects.
 
         if (isset($data['place_id']) || isset($data['error'])) {
-             // It's a single object (or error)
-             // If it's an error, Place constructor might fail or produce empty object. 
-             // Ideally we should check for error.
-             if (isset($data['error'])) {
-                 return [];
-             }
-             return [new Place($data)];
+            // It's a single object (or error)
+            // If it's an error, Place constructor might fail or produce empty object.
+            // Ideally we should check for error.
+            if (isset($data['error'])) {
+                return [];
+            }
+            return [new Place($data)];
         }
 
-        return array_map(fn(array $item) => new Place($item), $data);
+        return array_map(fn (array $item) => new Place($item), $data);
     }
 
     /**
      * Checks the status of the Nominatim server
      *
-     * @param  string  $format  Output format ('json' or 'text'). Default 'json'.
-     * @return PromiseInterface Promise that resolves to array{status: int, message: string, ...} or string
-     *
+     * @param  string                    $format Output format ('json' or 'text'). Default 'json'.
+     * @return PromiseInterface          Promise that resolves to array{status: int, message: string, ...} or string
      * @throws \InvalidArgumentException If format is invalid
      */
     public function status(string $format = 'json') : PromiseInterface
@@ -211,19 +209,18 @@ class Client
             throw new \InvalidArgumentException('Invalid format. Supported formats: json, text');
         }
 
-        return $this->request('GET', 'status', ['format' => $format], $format === 'json');
+        return $this->request('GET', 'status', ['format' => $format], 'json' === $format);
     }
 
     /**
      * Internal helper to perform HTTP requests
      *
-     * @param  string  $method  HTTP method (GET, POST, etc.)
-     * @param  string  $path  API endpoint path
-     * @param  array<string, mixed>  $query  Query parameters
-     * @param  bool  $decode_json  Whether to decode the response as JSON
-     * @return PromiseInterface Promise that resolves to decoded JSON array or raw string
-     *
-     * @throws TransportException If request fails or JSON decoding fails
+     * @param  string               $method      HTTP method (GET, POST, etc.)
+     * @param  string               $path        API endpoint path
+     * @param  array<string, mixed> $query       Query parameters
+     * @param  bool                 $decode_json Whether to decode the response as JSON
+     * @return PromiseInterface     Promise that resolves to decoded JSON array or raw string
+     * @throws TransportException   If request fails or JSON decoding fails
      */
     private function request(string $method, string $path, array $query, bool $decode_json = true) : PromiseInterface
     {
@@ -262,9 +259,8 @@ class Client
      * Parses the HTTP response and validates JSON if requested.
      *
      * @param  ResponseInterface  $response
-     * @param  bool  $decode_json
+     * @param  bool               $decode_json
      * @return array|string
-     *
      * @throws TransportException
      */
     private function parseResponse(ResponseInterface $response, bool $decode_json) : array|string
@@ -291,7 +287,7 @@ class Client
     /**
      * Sets the minimum interval between requests for the rate limiter
      *
-     * @param  int  $seconds  Minimum interval in seconds
+     * @param  int  $seconds Minimum interval in seconds
      * @return void
      */
     public function setRateLimitInterval(int $seconds) : void
@@ -303,7 +299,7 @@ class Client
     /**
      * Sets a custom Symfony rate limiter.
      *
-     * @param  LimiterInterface|null  $rate_limiter  Rate limiter instance (null to disable)
+     * @param  LimiterInterface|null $rate_limiter Rate limiter instance (null to disable)
      * @return void
      */
     public function setRateLimiter(?LimiterInterface $rate_limiter) : void
@@ -336,7 +332,7 @@ class Client
     {
         $builder = AsyncCacheManager::configure($this->cache);
 
-        if ($this->rate_limiter !== null) {
+        if (null !== $this->rate_limiter) {
             $builder->withRateLimiter($this->rate_limiter);
         }
 

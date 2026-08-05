@@ -9,7 +9,7 @@ class Address
     /**
      * Constructor for Address
      *
-     * @param  array  $details  Raw address details array
+     * @param array $details Raw address details array
      */
     public function __construct(array $details)
     {
@@ -19,7 +19,7 @@ class Address
     /**
      * Get a specific address detail by key
      *
-     * @param  string  $key  The key to look up
+     * @param  string      $key The key to look up
      * @return string|null The value or null if not found
      */
     public function get(string $key) : ?string

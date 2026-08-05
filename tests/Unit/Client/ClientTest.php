@@ -43,7 +43,7 @@ class ClientTest extends TestCase
                 'GET',
                 'search',
                 $this->callback(function ($options) {
-                    return isset($options['query']['format']) && $options['query']['format'] === 'geojson';
+                    return isset($options['query']['format']) && 'geojson' === $options['query']['format'];
                 })
             )
             ->willReturn($promise);
@@ -94,7 +94,7 @@ class ClientTest extends TestCase
                 'GET',
                 'reverse',
                 $this->callback(function ($options) {
-                    return isset($options['query']['format']) && $options['query']['format'] === 'geocodejson';
+                    return isset($options['query']['format']) && 'geocodejson' === $options['query']['format'];
                 })
             )
             ->willReturn($promise);
@@ -127,8 +127,8 @@ class ClientTest extends TestCase
                 'search',
                 $this->callback(function ($options) {
                     $query = $options['query'];
-                    return isset($query['street']) && $query['street'] === 'Main St'
-                        && isset($query['city']) && $query['city'] === 'Town'
+                    return isset($query['street']) && 'Main St' === $query['street']
+                        && isset($query['city']) && 'Town' === $query['city']
                         && !isset($query['q']); // Ensure 'q' is not set
                 })
             )
@@ -157,7 +157,7 @@ class ClientTest extends TestCase
                 'GET',
                 'lookup',
                 $this->callback(function ($options) {
-                    return isset($options['query']['osm_ids']) && $options['query']['osm_ids'] === 'R123,W456';
+                    return isset($options['query']['osm_ids']) && 'R123,W456' === $options['query']['osm_ids'];
                 })
             )
             ->willReturn(new FulfilledPromise($response));
@@ -187,7 +187,7 @@ class ClientTest extends TestCase
                 'GET',
                 'details',
                 $this->callback(function ($options) {
-                    return isset($options['query']['place_id']) && $options['query']['place_id'] == 12345;
+                    return isset($options['query']['place_id']) && 12345 == $options['query']['place_id'];
                 })
             )
             ->willReturn(new FulfilledPromise($response));
