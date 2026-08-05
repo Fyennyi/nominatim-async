@@ -307,4 +307,64 @@ class ClientTest extends TestCase
 
         \React\Async\await($client->search('test'));
     }
+
+    public function testSetRateLimitIntervalUpdatesLimiter()
+    {
+        $mockHttpClient = $this->createMock(ClientInterface::class);
+        $response = new Response(200, [], json_encode([['place_id' => 1]]));
+
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
+
+        $client = new Client($mockHttpClient);
+        $client->setRateLimitInterval(2);
+
+        $places = \React\Async\await($client->search('test'));
+
+        $this->assertCount(1, $places);
+    }
+
+    public function testSetRateLimiterWithCustomFactory()
+    {
+        $mockHttpClient = $this->createMock(ClientInterface::class);
+        $response = new Response(200, [], json_encode([['place_id' => 1]]));
+
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
+
+        $mockRateLimit = $this->createMock(\Symfony\Component\RateLimiter\RateLimit::class);
+        $mockRateLimit->method('isAccepted')->willReturn(true);
+
+        $mockLimiter = $this->createMock(\Symfony\Component\RateLimiter\LimiterInterface::class);
+        $mockLimiter->method('consume')->willReturn($mockRateLimit);
+
+        $mockFactory = $this->createMock(\Symfony\Component\RateLimiter\RateLimiterFactoryInterface::class);
+        $mockFactory->method('create')->willReturn($mockLimiter);
+
+        $client = new Client($mockHttpClient);
+        $client->setRateLimiter($mockFactory);
+
+        $places = \React\Async\await($client->search('test'));
+
+        $this->assertCount(1, $places);
+    }
+
+    public function testSetRateLimiterWithNullDisablesLimiter()
+    {
+        $mockHttpClient = $this->createMock(ClientInterface::class);
+        $response = new Response(200, [], json_encode([['place_id' => 1]]));
+
+        $mockHttpClient->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
+
+        $client = new Client($mockHttpClient);
+        $client->setRateLimiter(null);
+
+        $places = \React\Async\await($client->search('test'));
+
+        $this->assertCount(1, $places);
+    }
 }
