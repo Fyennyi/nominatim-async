@@ -6,8 +6,6 @@ use Fyennyi\Nominatim\Client;
 use Fyennyi\Nominatim\Exception\TransportException;
 use Fyennyi\Nominatim\Model\Place;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Promise\FulfilledPromise;
-use GuzzleHttp\Promise\RejectedPromise;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 
@@ -35,10 +33,9 @@ class ClientTest extends TestCase
         ];
 
         $response = new Response(200, [], json_encode($geojsonResponse));
-        $promise = new FulfilledPromise($response);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'search',
@@ -46,11 +43,10 @@ class ClientTest extends TestCase
                     return isset($options['query']['format']) && 'geojson' === $options['query']['format'];
                 })
             )
-            ->willReturn($promise);
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->search('test', ['format' => 'geojson']);
-        $places = $promise->wait();
+        $places = \React\Async\await($client->search('test', ['format' => 'geojson']));
 
         $this->assertCount(1, $places);
         $this->assertInstanceOf(Place::class, $places[0]);
@@ -86,10 +82,9 @@ class ClientTest extends TestCase
         ];
 
         $response = new Response(200, [], json_encode($geocodeJsonResponse));
-        $promise = new FulfilledPromise($response);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'reverse',
@@ -97,16 +92,15 @@ class ClientTest extends TestCase
                     return isset($options['query']['format']) && 'geocodejson' === $options['query']['format'];
                 })
             )
-            ->willReturn($promise);
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->reverse(40.0, 30.0, ['format' => 'geocodejson']);
-        $place = $promise->wait();
+        $place = \React\Async\await($client->reverse(40.0, 30.0, ['format' => 'geocodejson']));
 
         $this->assertInstanceOf(Place::class, $place);
         $this->assertEquals(456, $place->getPlaceId());
         $this->assertEquals('Test Reverse', $place->getLabel());
-        $this->assertEquals('Test Reverse', $place->getDisplayName()); // Should fallback to label
+        $this->assertEquals('Test Reverse', $place->getDisplayName());
         $this->assertEquals('Norway', $place->getAdminLevels()['level2']);
         $this->assertEquals(['type' => 'Point', 'coordinates' => [30.0, 40.0]], $place->getGeometry());
     }
@@ -121,7 +115,7 @@ class ClientTest extends TestCase
         $response = new Response(200, [], $responseBody);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'search',
@@ -129,14 +123,13 @@ class ClientTest extends TestCase
                     $query = $options['query'];
                     return isset($query['street']) && 'Main St' === $query['street']
                         && isset($query['city']) && 'Town' === $query['city']
-                        && !isset($query['q']); // Ensure 'q' is not set
+                        && !isset($query['q']);
                 })
             )
-            ->willReturn(new FulfilledPromise($response));
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->search(['street' => 'Main St', 'city' => 'Town']);
-        $places = $promise->wait();
+        $places = \React\Async\await($client->search(['street' => 'Main St', 'city' => 'Town']));
 
         $this->assertCount(1, $places);
         $this->assertEquals(101, $places[0]->getPlaceId());
@@ -152,7 +145,7 @@ class ClientTest extends TestCase
         $response = new Response(200, [], $responseBody);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'lookup',
@@ -160,11 +153,10 @@ class ClientTest extends TestCase
                     return isset($options['query']['osm_ids']) && 'R123,W456' === $options['query']['osm_ids'];
                 })
             )
-            ->willReturn(new FulfilledPromise($response));
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->lookup(['R123', 'W456']);
-        $places = $promise->wait();
+        $places = \React\Async\await($client->lookup(['R123', 'W456']));
 
         $this->assertCount(1, $places);
         $this->assertEquals(201, $places[0]->getPlaceId());
@@ -174,7 +166,6 @@ class ClientTest extends TestCase
     {
         $mockHttpClient = $this->createMock(ClientInterface::class);
 
-        // details returns a single object
         $responseBody = json_encode([
             'place_id' => 301,
             'category' => 'highway'
@@ -182,7 +173,7 @@ class ClientTest extends TestCase
         $response = new Response(200, [], $responseBody);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
+            ->method('request')
             ->with(
                 'GET',
                 'details',
@@ -190,11 +181,10 @@ class ClientTest extends TestCase
                     return isset($options['query']['place_id']) && 12345 == $options['query']['place_id'];
                 })
             )
-            ->willReturn(new FulfilledPromise($response));
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->details(['place_id' => 12345]);
-        $place = $promise->wait();
+        $place = \React\Async\await($client->details(['place_id' => 12345]));
 
         $this->assertInstanceOf(Place::class, $place);
         $this->assertEquals(301, $place->getPlaceId());
@@ -212,12 +202,11 @@ class ClientTest extends TestCase
         $response = new Response(200, [], $responseBody);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
-            ->willReturn(new FulfilledPromise($response));
+            ->method('request')
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->search('test');
-        $places = $promise->wait();
+        $places = \React\Async\await($client->search('test'));
 
         $this->assertCount(2, $places);
         $this->assertEquals(401, $places[0]->getPlaceId());
@@ -226,10 +215,8 @@ class ClientTest extends TestCase
 
     public function testSearchSingleObjectResponse()
     {
-        // This covers the single object fallback in processResponse (Line 182)
         $mockHttpClient = $this->createMock(ClientInterface::class);
 
-        // Response is a single object, NOT an array of objects
         $responseBody = json_encode([
             'place_id' => 501,
             'display_name' => 'Single Object Place'
@@ -237,12 +224,11 @@ class ClientTest extends TestCase
         $response = new Response(200, [], $responseBody);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
-            ->willReturn(new FulfilledPromise($response));
+            ->method('request')
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->search('test');
-        $places = $promise->wait();
+        $places = \React\Async\await($client->search('test'));
 
         $this->assertCount(1, $places);
         $this->assertEquals(501, $places[0]->getPlaceId());
@@ -258,12 +244,11 @@ class ClientTest extends TestCase
         $response = new Response(200, [], $responseBody);
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
-            ->willReturn(new FulfilledPromise($response));
+            ->method('request')
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
-        $promise = $client->search('invalid');
-        $places = $promise->wait();
+        $places = \React\Async\await($client->search('invalid'));
 
         $this->assertIsArray($places);
         $this->assertEmpty($places);
@@ -276,15 +261,15 @@ class ClientTest extends TestCase
         $response = new Response(200, [], 'invalid-json-{');
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
-            ->willReturn(new FulfilledPromise($response));
+            ->method('request')
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
 
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('Failed to decode JSON response');
 
-        $client->search('test')->wait();
+        \React\Async\await($client->search('test'));
     }
 
     public function testInvalidDataFormat()
@@ -294,15 +279,15 @@ class ClientTest extends TestCase
         $response = new Response(200, [], 'null');
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
-            ->willReturn(new FulfilledPromise($response));
+            ->method('request')
+            ->willReturn($response);
 
         $client = new Client($mockHttpClient);
 
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('API returned invalid data format');
 
-        $client->search('test')->wait();
+        \React\Async\await($client->search('test'));
     }
 
     public function testRequestException()
@@ -312,14 +297,14 @@ class ClientTest extends TestCase
         $exception = new \Exception('Network Error');
 
         $mockHttpClient->expects($this->once())
-            ->method('requestAsync')
-            ->willReturn(new RejectedPromise($exception));
+            ->method('request')
+            ->willThrowException($exception);
 
         $client = new Client($mockHttpClient);
 
         $this->expectException(TransportException::class);
         $this->expectExceptionMessage('HTTP request failed: Network Error');
 
-        $client->search('test')->wait();
+        \React\Async\await($client->search('test'));
     }
 }
