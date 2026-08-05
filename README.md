@@ -196,8 +196,7 @@ $factory = new RateLimiterFactory([
     'interval' => '1 second',
 ], new InMemoryStorage());
 
-$limiter = $factory->create();
-$client = new Client(null, $psr16Cache, 'MyApp/1.0', $limiter);
+$client = new Client(null, $psr16Cache, 'MyApp/1.0', $factory);
 ```
 
 ## Contributing
