@@ -8,7 +8,7 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/Fyennyi/nominatim-async/phpunit.yml?label=Tests&logo=github)](https://github.com/Fyennyi/nominatim-async/actions/workflows/phpunit.yml)
 [![Test Coverage](https://img.shields.io/codecov/c/github/Fyennyi/nominatim-async?label=Test%20Coverage&logo=codecov)](https://app.codecov.io/gh/Fyennyi/nominatim-async)
 
-An asynchronous PHP client for the [Nominatim](https://nominatim.org/) API (OpenStreetMap), built on top of Guzzle Promises. This library allows you to perform forward and reverse geocoding, address lookups, and more, without blocking your application's execution flow.
+An asynchronous PHP client for the [Nominatim](https://nominatim.org/) API (OpenStreetMap), built on top of React Promises and `fyennyi/async-cache-php`. This library allows you to perform forward and reverse geocoding, address lookups, and more, without blocking your application's execution flow.
 
 ## Installation
 
